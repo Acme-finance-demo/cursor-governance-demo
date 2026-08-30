@@ -1,0 +1,213 @@
+# 会社全体のリポジトリを対象にした継続的な脆弱性ガバナンス。
+# 対象は governance/fleet.json。リポジトリごとに クローン → Trivy → policy →
+# Cloud Agent が修正 PR、最後に横断サマリを Job Summary と Issue に出す。
+# 単一リポジトリ版は security-scan.yml。こちらはフリート全体を回す方。
+name: fleet governance
+
+on:
+  schedule:
+    # 毎日 18:00 UTC = 03:00 JST。「常時回っている」状態を作るのが目的。
+    # 注意: schedule と workflow_dispatch は **デフォルトブランチ上のワークフローしか**
+    # 動かない。このブランチで検証している間は下の push トリガーで回す。
+    - cron: "0 18 * * *"
+  workflow_dispatch:
+    inputs:
+      repos:
+        description: "対象を絞る場合は owner/repo をカンマ区切りで（空なら fleet.json の全件）"
+        required: false
+        default: ""
+  push:
+    paths:
+      # フリート構成やこのワークフロー自体を変えたら回し直す
+      - "governance/**"
+      - ".github/workflows/fleet-governance.yml"
+
+permissions:
+  contents: read
+  # 横断サマリを Issue として起票する
+  issues: write
+
+jobs:
+  # fleet.json を読み、ref 未指定はデフォルトブランチを解決して matrix を作る。
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+      count: ${{ steps.plan.outputs.count }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: plan
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FILTER: ${{ inputs.repos }}
+        run: |
+          set -euo pipefail
+          ENTRIES=$(jq -c '.repos' governance/fleet.json)
+          TOTAL=$(jq 'length' <<<"$ENTRIES")
+          OUT='[]'
+          for i in $(seq 0 $((TOTAL - 1))); do
+            ENTRY=$(jq -c ".[$i]" <<<"$ENTRIES")
+            URL=$(jq -r '.url' <<<"$ENTRY")
+            SLUG=$(sed -E 's#^https?://github.com/##; s#\.git$##' <<<"$URL")
+            if [ -n "${FILTER}" ] && ! grep -q ",${SLUG}," <<<",${FILTER},"; then
+              echo "skip ${SLUG} (not in the filter)"
+              continue
+            fi
+            REF=$(jq -r '.ref // empty' <<<"$ENTRY")
+            if [ -z "$REF" ]; then
+              REF=$(gh api "repos/${SLUG}" --jq .default_branch)
+            fi
+            NAME=$(jq -r '.name // empty' <<<"$ENTRY")
+            if [ -z "$NAME" ]; then
+              NAME="$SLUG"
+            fi
+            # artifact 名に使うので owner/repo の / を - に潰す
+            KEY=$(tr '/' '-' <<<"$SLUG")
+            OUT=$(jq -c \
+              --arg name "$NAME" --arg slug "$SLUG" --arg url "$URL" --arg ref "$REF" --arg key "$KEY" \
+              '. + [{name: $name, slug: $slug, url: $url, ref: $ref, key: $key}]' <<<"$OUT")
+            echo "planned ${SLUG}@${REF}"
+          done
+          echo "matrix=${OUT}" >> "$GITHUB_OUTPUT"
+          echo "count=$(jq 'length' <<<"$OUT")" >> "$GITHUB_OUTPUT"
+
+  # リポジトリ 1 本ずつ。1 本落ちても他は続ける。
+  scan:
+    needs: plan
+    if: needs.plan.outputs.count != '0'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      # 1 リポジトリあたり最大 3 エージェント（triage / fix / impact）が動く。
+      # 並列にすると Cursor プランの同時実行 Cloud Agent 数の上限
+      # （"You've reached the limit for your current plan"）に当たるので直列にする。
+      # 枠に余裕があるプランなら増やしてよい。
+      max-parallel: 1
+      matrix:
+        repo: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    env:
+      SCAN_TRIVY_VERSION: 0.74.0
+      SCAN_FLAGS: >-
+        --scanners vuln --severity CRITICAL,HIGH,MEDIUM
+        --skip-dirs target --skip-dirs cursor-sdk --skip-dirs node_modules
+        --skip-dirs vendor --skip-dirs dist --skip-dirs .git
+      CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+      # 対象リポジトリを Cloud Agent に渡す。SHA ではなくブランチ名（security-scan.yml と同じ理由）
+      CURSOR_REPO_URL: ${{ matrix.repo.url }}
+      CURSOR_STARTING_REF: ${{ matrix.repo.ref }}
+      VULN_HOST: github
+      VULN_RUNTIME: cloud
+    steps:
+      - name: Check for CURSOR_API_KEY
+        id: guard
+        run: |
+          if [ -z "${CURSOR_API_KEY}" ]; then
+            echo "CURSOR_API_KEY is not set; scanning only, no remediation" >> "$GITHUB_STEP_SUMMARY"
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+      # オーケストレータのコード（この repo）
+      - uses: actions/checkout@v4
+        with:
+          path: control
+      # 監査対象。public リポジトリなのでトークンは不要
+      # ディレクトリ名を target にしないこと。SCAN_FLAGS の --skip-dirs target
+      # （対象リポジトリ内の Maven ビルド出力を除外する指定）がスキャン対象ごと
+      # 除外してしまい、検出が常に 0 件になる。
+      - name: Clone the target repository
+        run: |
+          git clone --depth 1 --branch "${{ matrix.repo.ref }}" "${{ matrix.repo.url }}.git" repo
+          echo "HEAD: $(git -C repo rev-parse --short HEAD)"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: control/cursor-sdk/package-lock.json
+      - name: Install Trivy
+        run: |
+          curl -sSfL "https://github.com/aquasecurity/trivy/releases/download/v${SCAN_TRIVY_VERSION}/trivy_${SCAN_TRIVY_VERSION}_Linux-64bit.tar.gz" -o /tmp/trivy.tar.gz
+          sudo tar -xzf /tmp/trivy.tar.gz -C /usr/local/bin trivy
+      - name: Cache the Trivy vulnerability DB
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/trivy
+          key: trivy-db-${{ github.run_id }}
+          restore-keys: trivy-db-
+      # Maven だけは POM を解決しないと Maven Central を叩いて 429 になりやすい。
+      # 失敗しても pom.xml 自体はスキャンできるので続行する。
+      - name: Resolve Maven dependencies (best effort)
+        run: |
+          if [ -f repo/pom.xml ] && [ -x repo/mvnw ]; then
+            (cd repo && ./mvnw -B -DskipTests dependency:resolve) || echo "dependency:resolve failed; scanning the manifest only"
+          else
+            echo "not a Maven repository; nothing to resolve"
+          fi
+      - name: Scan (JSON)
+        run: trivy fs ${SCAN_FLAGS} --format json --output "$GITHUB_WORKSPACE/trivy-report.json" repo
+      - name: Scan (table for the log)
+        run: trivy fs ${SCAN_FLAGS} --exit-code 0 --format table repo
+      - name: Triage, policy, fix PR, impact analysis
+        if: steps.guard.outputs.enabled == 'true'
+        working-directory: control/cursor-sdk
+        run: |
+          npm ci
+          npx tsx src/cli.ts run \
+            --report "$GITHUB_WORKSPACE/trivy-report.json" \
+            --cwd "$GITHUB_WORKSPACE/repo" \
+            --runtime cloud
+      # 対象リポジトリ側に書かれた state を横断レポート用に回収する
+      - name: Collect the result
+        if: always()
+        run: |
+          mkdir -p out
+          if [ -f repo/.cursor/vuln-orchestrator-state.json ]; then
+            jq -c --arg name "${{ matrix.repo.name }}" --arg slug "${{ matrix.repo.slug }}" --arg ref "${{ matrix.repo.ref }}" \
+              '. + {fleetName: $name, fleetSlug: $slug, fleetRef: $ref}' \
+              repo/.cursor/vuln-orchestrator-state.json > "out/${{ matrix.repo.key }}.json"
+          else
+            jq -n --arg name "${{ matrix.repo.name }}" --arg slug "${{ matrix.repo.slug }}" --arg ref "${{ matrix.repo.ref }}" \
+              '{fleetName: $name, fleetSlug: $slug, fleetRef: $ref, error: "no state file (scan or orchestrator failed)"}' \
+              > "out/${{ matrix.repo.key }}.json"
+          fi
+          cat "out/${{ matrix.repo.key }}.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fleet-state-${{ matrix.repo.key }}
+          path: out/${{ matrix.repo.key }}.json
+          if-no-files-found: warn
+
+  # 横断サマリ。Job Summary と Issue の両方に出す。
+  report:
+    needs: [plan, scan]
+    if: always() && needs.plan.outputs.count != '0'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: control
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: fleet-state-*
+          path: states
+          merge-multiple: true
+      - name: Render the fleet report
+        env:
+          MATRIX: ${{ needs.plan.outputs.matrix }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: python3 control/governance/render-report.py
+      - name: Publish the report as an Issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue create \
+            --repo "${{ github.repository }}" \
+            --title "$(cat report-title.txt)" \
+            --body-file report.md

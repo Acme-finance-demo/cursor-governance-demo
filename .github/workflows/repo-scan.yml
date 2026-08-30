@@ -1,0 +1,150 @@
+# アプリ側リポジトリから呼ぶ再利用可能ワークフロー。
+# 呼び出し側は 1 ジョブ書くだけで、スキャン・ポリシー判定・修正 PR・影響分析が付く。
+# オーケストレータのコードは呼び出し側に置かない（このリポジトリが唯一の置き場所）。
+#
+# 呼び出し例（アプリ側 .github/workflows/security.yml）:
+#
+#   permissions:
+#     contents: read
+#     security-events: write
+#   jobs:
+#     governance:
+#       uses: naoharu/cursor-governance-demo/.github/workflows/repo-scan.yml@main
+#       with:
+#         remediate: ${{ github.event_name != 'pull_request' }}
+#       secrets: inherit
+name: repo scan (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: "スキャンする ref。省略時は呼び出し元のコミット"
+        type: string
+        required: false
+        default: ""
+      remediate:
+        description: "policy を通った CRITICAL を自動修正して PR を開くか。false ならスキャンのみ"
+        type: boolean
+        required: false
+        default: true
+      upload-sarif:
+        description: "Trivy の SARIF を Code scanning へ上げるか"
+        type: boolean
+        required: false
+        default: true
+      control-plane-ref:
+        description: "コントロールプレーン（このリポジトリ）の ref"
+        type: string
+        required: false
+        default: main
+    secrets:
+      CURSOR_API_KEY:
+        description: "Cursor の API キー。未設定ならスキャンのみで成功終了する"
+        required: false
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      security-events: write
+    env:
+      SCAN_TRIVY_VERSION: 0.74.0
+      SCAN_FLAGS: >-
+        --scanners vuln --severity CRITICAL,HIGH,MEDIUM
+        --skip-dirs target --skip-dirs node_modules
+        --skip-dirs vendor --skip-dirs dist --skip-dirs .git
+      CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+      CURSOR_REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+      # SHA ではなくブランチ名。Cursor の ref 検証が push 直後の SHA を解決できないことがある
+      CURSOR_STARTING_REF: ${{ github.ref_name }}
+      VULN_HOST: github
+      VULN_RUNTIME: cloud
+    steps:
+      # 呼び出し元のリポジトリ。ディレクトリ名を target にしないこと
+      # （--skip-dirs target がスキャン対象ごと除外してしまう）
+      - name: Check out the calling repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+          path: repo
+      - name: Check out the control plane
+        uses: actions/checkout@v4
+        with:
+          repository: naoharu/cursor-governance-demo
+          ref: ${{ inputs.control-plane-ref }}
+          path: control
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: control/cursor-sdk/package-lock.json
+      - name: Install Trivy
+        run: |
+          curl -sSfL "https://github.com/aquasecurity/trivy/releases/download/v${SCAN_TRIVY_VERSION}/trivy_${SCAN_TRIVY_VERSION}_Linux-64bit.tar.gz" -o /tmp/trivy.tar.gz
+          sudo tar -xzf /tmp/trivy.tar.gz -C /usr/local/bin trivy
+      - name: Cache the Trivy vulnerability DB
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/trivy
+          key: trivy-db-${{ github.run_id }}
+          restore-keys: trivy-db-
+      # Maven は POM を解決しないと Maven Central を叩いて 429 になりやすい。
+      # 失敗してもマニフェスト自体はスキャンできるので続行する。
+      - name: Resolve Maven dependencies (best effort)
+        run: |
+          if [ -f repo/pom.xml ] && [ -x repo/mvnw ]; then
+            (cd repo && ./mvnw -B -DskipTests dependency:resolve) || echo "dependency:resolve failed; scanning the manifest only"
+          else
+            echo "not a Maven repository; nothing to resolve"
+          fi
+      - name: Scan (JSON)
+        run: trivy fs ${SCAN_FLAGS} --format json --output "$GITHUB_WORKSPACE/trivy-report.json" repo
+      - name: Scan (SARIF)
+        if: inputs.upload-sarif
+        run: trivy fs ${SCAN_FLAGS} --format sarif --output "$GITHUB_WORKSPACE/trivy-results.sarif" repo
+      # 検出してもジョブは失敗させない。自動修正するかは policy が決める
+      - name: Scan (table for the log)
+        run: trivy fs ${SCAN_FLAGS} --exit-code 0 --format table repo
+      # Code scanning が無効なリポジトリでは 403 になるため落とさない
+      - name: Upload SARIF to Code scanning
+        if: always() && inputs.upload-sarif
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif
+          category: trivy-fs
+      - name: Check for CURSOR_API_KEY
+        id: guard
+        run: |
+          if [ -z "${CURSOR_API_KEY}" ]; then
+            echo "CURSOR_API_KEY is not set; scan only." >> "$GITHUB_STEP_SUMMARY"
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Triage, policy, fix PR, impact analysis
+        if: inputs.remediate && steps.guard.outputs.enabled == 'true'
+        working-directory: control/cursor-sdk
+        run: |
+          npm ci
+          npx tsx src/cli.ts run \
+            --report "$GITHUB_WORKSPACE/trivy-report.json" \
+            --cwd "$GITHUB_WORKSPACE/repo" \
+            --runtime cloud
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trivy-report
+          path: |
+            trivy-report.json
+            trivy-results.sarif
+            repo/.cursor/vuln-orchestrator-state.json
+          if-no-files-found: warn

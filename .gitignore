@@ -1,0 +1,16 @@
+### Node / orchestrator ###
+node_modules/
+cursor-sdk/dist/
+
+### Generated at runtime (never committed) ###
+trivy-report.json
+trivy-results.sarif
+.cursor/vuln-orchestrator-state.json
+states/
+report.md
+report-title.txt
+
+### Editors / OS ###
+.DS_Store
+.idea/
+.vscode/

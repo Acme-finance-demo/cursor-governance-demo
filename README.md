@@ -1,0 +1,126 @@
+# Continuous vulnerability governance (control plane)
+
+日本語: [README.ja.md](./README.ja.md)
+
+This repository is the control plane. It scans a fleet of repositories for dependency
+vulnerabilities, decides **in code** which findings may be fixed automatically, and lets a
+Cursor cloud agent open the fix PR with an impact analysis attached.
+
+Nothing in here is installed into the repositories it governs. An application repository
+either appears in `governance/fleet.json`, or calls one reusable workflow — never both a
+copy of the orchestrator.
+
+```
+                      cursor-governance-demo (this repository)
+                      ├── policy as code          cursor-sdk/src/policy.ts
+                      ├── the fleet               governance/fleet.json
+                      └── the agents              cursor-sdk/src/
+                                  │
+        ┌─────────────────────────┼─────────────────────────┐
+        ▼                         ▼                         ▼
+   app repo (Java)           app repo (npm)            app repo (Go)
+   fix PR + analysis         fix PR + analysis         fix PR + analysis
+```
+
+## Two ways a repository is covered
+
+| | Fleet run | Reusable workflow |
+| --- | --- | --- |
+| Workflow | `.github/workflows/fleet-governance.yml` (here) | `.github/workflows/repo-scan.yml` (here), called by the app repo |
+| Trigger | `schedule` (daily), `workflow_dispatch` | the app repo's own `push` / `pull_request` |
+| Onboarding | add an entry to `governance/fleet.json` | add one job to the app repo |
+| Story | continuous governance across every repository | shift-left on the change that introduces the risk |
+
+Both run the same triage → policy → fix → impact flow, so a finding is treated the same
+way whichever path reaches it first.
+
+### Onboarding by fleet
+
+```json
+{
+  "repos": [
+    { "name": "petclinic (Java / Maven)", "url": "https://github.com/acme/petclinic", "ref": "main" },
+    { "name": "web (npm)", "url": "https://github.com/acme/web" }
+  ]
+}
+```
+
+`url` is required. `ref` defaults to that repository's default branch. `name` is the label
+in the report. Public repositories need no token: Actions only clones them, and the fix PR
+is pushed by Cursor's GitHub App. For private targets, add a PAT with `repo` scope and use
+it in the clone step.
+
+### Onboarding by workflow
+
+In the application repository:
+
+```yaml
+name: security
+
+on:
+  push:
+    branches-ignore: ["cursor/**"]
+  pull_request:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  governance:
+    uses: naoharu/cursor-governance-demo/.github/workflows/repo-scan.yml@main
+    with:
+      remediate: ${{ github.event_name != 'pull_request' }}
+    secrets: inherit
+```
+
+`secrets: inherit` passes the caller's `CURSOR_API_KEY`. Without that secret the workflow
+still scans and uploads SARIF, and remediation is left to the nightly fleet run — so an
+application team can opt in to scanning without holding a key.
+
+## What a run produces
+
+- One fix PR per repository, listing the CVEs and packages it upgraded, with everything
+  policy declined as a TODO list in the body
+- An impact analysis appended to that PR's description: what changed, which call sites are
+  affected, the re-test scope, breaking changes from the library's own release notes, and an
+  overall 🟢 / 🟡 / 🔴 risk rating
+- Trivy SARIF in the application repository's Security tab (reusable-workflow path)
+- A roll-up report in the job summary and as an Issue here: per-repository findings, what
+  was auto-fixed, what was deferred and why, and links to every fix PR
+
+## Policy is code, not the agent's judgement
+
+`cursor-sdk/src/policy.ts` decides. A package is auto-remediated only when all of these
+hold:
+
+- Severity is `CRITICAL` (`AUTO_REMEDIATE_SEVERITIES`)
+- A version bump alone fixes it, and a recommended version exists
+- It is not a major bump, and not a downgrade
+
+Everything else is reported, never silently upgraded. Widening the rule is one line, and it
+takes effect across the whole fleet on the next run — that is the point of a control plane.
+
+## Setup
+
+1. **Settings → Secrets and variables → Actions** here → add `CURSOR_API_KEY` (from the
+   [Cursor dashboard](https://cursor.com/dashboard/api))
+2. Connect the target repositories to Cursor at
+   [cursor.com/dashboard/integrations](https://cursor.com/dashboard/integrations). The cloud
+   agent pushes the fix branch itself, so its GitHub App needs write access — `GITHUB_TOKEN`
+   is not used for that
+3. Add the repositories to `governance/fleet.json`, or add the caller workflow to them
+
+## Layout
+
+| Path | Role |
+| --- | --- |
+| `.github/workflows/fleet-governance.yml` | Fleet run: matrix over `fleet.json`, then the roll-up |
+| `.github/workflows/repo-scan.yml` | Reusable workflow application repositories call |
+| `governance/fleet.json` | Which repositories are governed |
+| `governance/render-report.py` | Per-repository state files → roll-up report |
+| `cursor-sdk/` | The orchestrator: triage, policy, remediation, impact analysis |
+
+Details: [cursor-sdk/USAGE.md](./cursor-sdk/USAGE.md) ·
+[cursor-sdk/ARCHITECTURE.md](./cursor-sdk/ARCHITECTURE.md) ·
+[cursor-sdk/SEQUENCE.md](./cursor-sdk/SEQUENCE.md)
