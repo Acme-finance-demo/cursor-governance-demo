@@ -98,6 +98,7 @@ async function main(): Promise<void> {
       startingRef: hostContext.startingRef,
       pipelineId: hostContext.pipelineId,
       sha: hostContext.sha,
+      targetSha: hostContext.targetSha,
       skipRemediate: flag("--skip-remediate"),
     });
     return;

@@ -67,6 +67,18 @@ function gitRemoteOrigin(cwd: string): string | undefined {
   }
 }
 
+function gitHeadSha(cwd: string): string | undefined {
+  try {
+    return execFileSync("git", ["rev-parse", "HEAD"], {
+      cwd,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+  } catch {
+    return undefined;
+  }
+}
+
 function first(...values: (string | undefined)[]): string | undefined {
   for (const value of values) {
     const trimmed = value?.trim();
@@ -122,6 +134,7 @@ export function resolveHostContext(args: ResolveHostArgs): HostContext {
         env.CI_COMMIT_REF_NAME,
       ) ?? "main",
     sha: first(env.GITHUB_SHA, env.CI_COMMIT_SHA),
+    targetSha: gitHeadSha(args.cwd),
     pipelineId: first(env.GITHUB_RUN_ID, env.CI_PIPELINE_ID),
   };
 }

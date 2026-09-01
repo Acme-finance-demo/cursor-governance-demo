@@ -21,7 +21,10 @@ export type HostContext = {
   vocab: HostVocab;
   repoUrl: string;
   startingRef: string;
+  /** CI が動いているリポジトリ（統制側）のコミット */
   sha?: string;
+  /** 監査対象リポジトリの HEAD。冪等キーはこちらを使う */
+  targetSha?: string;
   pipelineId?: string;
 };
 
@@ -97,6 +100,8 @@ export type OrchestratorState = {
   findings?: FindingSummary;
   pipelineId?: string;
   sha?: string;
+  /** 分析した対象リポジトリのコミット。PR がどの状態に対する提案かを固定する */
+  targetSha?: string;
   triageAgentId?: string;
   triageRunId?: string;
   remediationAgentId?: string;

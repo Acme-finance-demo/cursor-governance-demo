@@ -30,7 +30,10 @@ export type RunArgs = {
   repoUrl: string;
   startingRef: string;
   pipelineId?: string;
+  /** CI が動いているリポジトリ（統制側）のコミット */
   sha?: string;
+  /** 監査対象リポジトリの HEAD */
+  targetSha?: string;
   skipRemediate?: boolean;
 };
 
@@ -40,8 +43,16 @@ function repoSlug(repoUrl: string): string {
   return parts.slice(-2).join("-").toLowerCase().replace(/[^a-z0-9-]+/g, "-");
 }
 
+/**
+ * 二重起動を防ぐ鍵。**監査対象**のコミットで決める。
+ *
+ * 以前は CI が動いているリポジトリ（統制側）の SHA を使っていた。そのため対象が
+ * 1 バイトも変わっていなくても統制側を触るたびに同じ内容の PR が増え、逆に対象の
+ * コードが変わっても統制側が同じコミットなら古い Agent と古い分析が返ってきた。
+ * どちらも同じ原因なので、対象の HEAD を鍵にする。
+ */
 function idempotencyKey(purpose: string, args: RunArgs): string | undefined {
-  const base = args.sha ?? args.pipelineId;
+  const base = args.targetSha ?? args.sha ?? args.pipelineId;
   return base ? `${purpose}-${repoSlug(args.repoUrl)}-${base}` : undefined;
 }
 
@@ -59,6 +70,7 @@ export async function runOrchestrator(args: RunArgs): Promise<OrchestratorState>
       findings: { total: 0, bySeverity: {}, packageGroups: 0 },
       pipelineId: args.pipelineId,
       sha: args.sha,
+      targetSha: args.targetSha,
       decisions: [],
     };
     await writeState(defaultStatePath(args.cwd), empty);
@@ -119,6 +131,7 @@ export async function runOrchestrator(args: RunArgs): Promise<OrchestratorState>
     findings: findingSummary,
     pipelineId: args.pipelineId,
     sha: args.sha,
+      targetSha: args.targetSha,
     triageAgentId: triage.agentId,
     triageRunId: triage.runId,
     decisions,
