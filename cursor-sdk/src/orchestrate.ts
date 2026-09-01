@@ -36,10 +36,11 @@ const DEFAULT_MAX_PULL_REQUESTS = 5;
  * 比例するので、並列度を上げても費用は変わらず、待ち時間だけ縮む。
  *
  * プランごとの同時実行上限は公開されていない（Pro が基準、Pro+ が 3 倍、Ultra が
- * 20 倍という比率だけが分かっている）。数を当てにいくのではなく、控えめな既定値から
- * 始めて、上限に当たったら createWithRetry の待ちに吸収させる。
+ * 20 倍という比率だけが分かっている）。数を当てにいくのではなく、上限に当たったら
+ * createWithRetry の待ちに吸収させる。2 本の同時実行は実測で通っている
+ * （2026-09-01、slots-full にならず 41% 短縮）。
  */
-const DEFAULT_AGENT_CONCURRENCY = 2;
+const DEFAULT_AGENT_CONCURRENCY = 3;
 
 export type RunArgs = {
   apiKey: string;

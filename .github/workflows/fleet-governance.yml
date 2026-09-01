@@ -37,7 +37,7 @@ on:
         required: false
         default: ""
       agent_concurrency:
-        description: "1 リポジトリ内で同時に走らせる Cloud Agent 数（空なら 2）"
+        description: "1 リポジトリ内で同時に走らせる Cloud Agent 数（空なら 3）"
         required: false
         default: ""
   push:

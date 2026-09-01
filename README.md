@@ -122,7 +122,7 @@ before any agent starts:
 The roll-up report shows all three outcomes, so a queue is visible rather than silent.
 
 Groups do not depend on each other, so they do not run one at a time.
-`VULN_AGENT_CONCURRENCY` (`--agent-concurrency`, default 2) sets how many agents run at
+`VULN_AGENT_CONCURRENCY` (`--agent-concurrency`, default 3) sets how many agents run at
 once inside a repository; total concurrency is that times the matrix's `max-parallel`.
 Tokens track the work an agent does, not wall-clock time, so this shortens a run without
 costing more. The per-plan ceiling on simultaneous cloud agents is not published, so the
