@@ -5,13 +5,14 @@ English: [README.md](./README.md)
 このリポジトリはコントロールプレーンです。複数リポジトリの依存関係脆弱性をスキャンし、
 **どれを自動修正してよいかをコードで**判定し、Cursor の Cloud Agent が影響分析付きの修正 PR を開きます。
 
-統制対象のリポジトリ側には何も入れません。アプリのリポジトリは `governance/fleet.json` に載るか、
+統制対象のリポジトリ側には何も入れません。アプリのリポジトリは自動で発見されるか、
 再利用可能ワークフローを呼ぶかのどちらかで、オーケストレータのコピーを持つことはありません。
 
 ```
                       cursor-governance-demo（このリポジトリ）
                       ├── ポリシー（コード）      cursor-sdk/src/policy.ts
-                      ├── 統制対象一覧            governance/fleet.json
+                      ├── 発見                  governance/discovery.json
+                      ├── 除外（唯一の出口）    governance/exemptions.json
                       └── エージェント            cursor-sdk/src/
                                   │
         ┌─────────────────────────┼─────────────────────────┐
@@ -26,7 +27,7 @@ English: [README.md](./README.md)
 | --- | --- | --- |
 | ワークフロー | `.github/workflows/fleet-governance.yml`（ここ） | `.github/workflows/repo-scan.yml`（ここ）をアプリ側が呼ぶ |
 | トリガー | `schedule`（毎日）/ `workflow_dispatch` | アプリ側の `push` / `pull_request` |
-| 追加方法 | `governance/fleet.json` に 1 エントリ足す | アプリ側にジョブ 1 つ足す |
+| 追加方法 | 何もしない（次の run で発見される） | アプリ側にジョブ 1 つ足す |
 | 位置づけ | 全リポジトリを常時見る継続的統制 | リスクを持ち込んだ変更の時点で止める shift-left |
 
 どちらも同じ トリアージ → policy → 修正 → 影響分析 を通るので、どちらの経路で拾われても
@@ -102,15 +103,17 @@ jobs:
 2. 対象リポジトリを [cursor.com/dashboard/integrations](https://cursor.com/dashboard/integrations)
    で Cursor に接続する。修正ブランチを push するのは Cloud Agent 自身なので、その GitHub App に
    書き込み権限が必要（`GITHUB_TOKEN` は使わない）
-3. 対象リポジトリを `governance/fleet.json` に追加するか、呼び出し側ワークフローを置く
+3. 数え直す対象オーナーを `governance/discovery.json` に書くか、アプリ側に呼び出しワークフローを置く
 
 ## 構成
 
 | パス | 役割 |
 | --- | --- |
-| `.github/workflows/fleet-governance.yml` | フリート実行。`fleet.json` を matrix で回して横断レポート |
+| `.github/workflows/fleet-governance.yml` | フリート実行。発見 → 全件を並列スキャン → CRITICAL のあるリポジトリだけ修正 → 横断レポート |
 | `.github/workflows/repo-scan.yml` | アプリ側が呼ぶ再利用可能ワークフロー |
-| `governance/fleet.json` | 統制対象のリポジトリ一覧 |
+| `governance/discover.py` | run ごとにオーナーの持ちリポジトリを数え直す |
+| `governance/discovery.json` | 数え直す対象オーナー。ref と表示名の上書き |
+| `governance/exemptions.json` | スコープから外れる唯一の方法。理由と見直し日を必ず書く |
 | `governance/render-report.py` | リポジトリ別 state → 横断レポート |
 | `cursor-sdk/` | オーケストレータ本体（トリアージ・policy・修正・影響分析） |
 

@@ -7,13 +7,14 @@ vulnerabilities, decides **in code** which findings may be fixed automatically, 
 Cursor cloud agent open the fix PR with an impact analysis attached.
 
 Nothing in here is installed into the repositories it governs. An application repository
-either appears in `governance/fleet.json`, or calls one reusable workflow — never both a
+is discovered automatically, or calls one reusable workflow — never both a
 copy of the orchestrator.
 
 ```
                       cursor-governance-demo (this repository)
                       ├── policy as code          cursor-sdk/src/policy.ts
-                      ├── the fleet               governance/fleet.json
+                      ├── discovery             governance/discovery.json
+                      ├── the only way out      governance/exemptions.json
                       └── the agents              cursor-sdk/src/
                                   │
         ┌─────────────────────────┼─────────────────────────┐
@@ -28,7 +29,7 @@ copy of the orchestrator.
 | --- | --- | --- |
 | Workflow | `.github/workflows/fleet-governance.yml` (here) | `.github/workflows/repo-scan.yml` (here), called by the app repo |
 | Trigger | `schedule` (daily), `workflow_dispatch` | the app repo's own `push` / `pull_request` |
-| Onboarding | add an entry to `governance/fleet.json` | add one job to the app repo |
+| Onboarding | nothing — the repository is discovered on the next run | add one job to the app repo |
 | Story | continuous governance across every repository | shift-left on the change that introduces the risk |
 
 Both run the same triage → policy → fix → impact flow, so a finding is treated the same
@@ -109,15 +110,17 @@ takes effect across the whole fleet on the next run — that is the point of a c
    [cursor.com/dashboard/integrations](https://cursor.com/dashboard/integrations). The cloud
    agent pushes the fix branch itself, so its GitHub App needs write access — `GITHUB_TOKEN`
    is not used for that
-3. Add the repositories to `governance/fleet.json`, or add the caller workflow to them
+3. List the owners to enumerate in `governance/discovery.json`, or add the caller workflow to the app repositories
 
 ## Layout
 
 | Path | Role |
 | --- | --- |
-| `.github/workflows/fleet-governance.yml` | Fleet run: matrix over `fleet.json`, then the roll-up |
+| `.github/workflows/fleet-governance.yml` | Fleet run: discover, scan every repository in parallel, remediate the ones with CRITICAL findings, then the roll-up |
 | `.github/workflows/repo-scan.yml` | Reusable workflow application repositories call |
-| `governance/fleet.json` | Which repositories are governed |
+| `governance/discover.py` | Enumerates the owners' repositories on every run |
+| `governance/discovery.json` | Which owners to enumerate; per-repository ref and name overrides |
+| `governance/exemptions.json` | The only way out of scope. Every entry carries a reason and a review date |
 | `governance/render-report.py` | Per-repository state files → roll-up report |
 | `cursor-sdk/` | The orchestrator: triage, policy, remediation, impact analysis |
 

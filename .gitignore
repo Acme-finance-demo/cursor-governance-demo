@@ -14,3 +14,7 @@ report-title.txt
 .DS_Store
 .idea/
 .vscode/
+
+# python の中間ファイル
+__pycache__/
+*.pyc
