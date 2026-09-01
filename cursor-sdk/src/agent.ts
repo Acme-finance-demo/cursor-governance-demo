@@ -24,7 +24,9 @@ export type AgentRunOutcome = {
 
 /** 同時実行 Cloud Agent 数の上限。プラン依存で、待てば解消する。 */
 const AGENT_SLOTS_FULL = /reached the limit|more cloud agents/i;
-const RETRY_DELAYS_MS = [60_000, 120_000, 180_000];
+// 最初の 1 段が短いのは、埋めているのが自分のプールである場合が多いため
+// （すぐ隣の Agent が終われば空く）。それでも空かないなら他の利用者と競合している。
+const RETRY_DELAYS_MS = [15_000, 60_000, 120_000, 180_000];
 
 /**
  * ストリームが先に解放されると wait() が status=error で返る。Agent 自体は

@@ -114,6 +114,13 @@ Go modules と npm の lockfile が 1 本に同居していました。所有者
 
 横断レポートには 3 つの結果すべてが出るので、待ち行列が見えない形で溜まることはありません。
 
+グループ間に依存は無いので、1 本ずつ順番に回す理由はありません。`VULN_AGENT_CONCURRENCY`
+（`--agent-concurrency`、既定 2）で 1 リポジトリ内の同時 Agent 数を決めます。同時に走る
+総数は、これに matrix の `max-parallel` を掛けた数です。**トークンは Agent が働いた量に
+比例し、壁時計時間には比例しない**ので、並列度を上げても費用は増えず待ち時間だけ縮みます。
+プランごとの同時実行上限は公開されていないため、既定値は控えめにし、超過は数を当てにいく
+のではなく `createWithRetry` の待ちで吸収します。
+
 ## セットアップ
 
 1. このリポジトリの **Settings → Secrets and variables → Actions** に `CURSOR_API_KEY` を追加

@@ -121,6 +121,14 @@ before any agent starts:
 
 The roll-up report shows all three outcomes, so a queue is visible rather than silent.
 
+Groups do not depend on each other, so they do not run one at a time.
+`VULN_AGENT_CONCURRENCY` (`--agent-concurrency`, default 2) sets how many agents run at
+once inside a repository; total concurrency is that times the matrix's `max-parallel`.
+Tokens track the work an agent does, not wall-clock time, so this shortens a run without
+costing more. The per-plan ceiling on simultaneous cloud agents is not published, so the
+default is deliberately low and overshoot is absorbed by the retry in `createWithRetry`
+rather than by guessing the number.
+
 ## Setup
 
 1. **Settings → Secrets and variables → Actions** here → add `CURSOR_API_KEY` (from the

@@ -18,6 +18,7 @@ import type {
   HostVocab,
   OrchestratorState,
   PolicyDecision,
+  PullRequestRecord,
   Runtime,
 } from "./types.ts";
 
@@ -27,6 +28,18 @@ import type {
  * over_budget として次の run に回す。
  */
 const DEFAULT_MAX_PULL_REQUESTS = 5;
+
+/**
+ * 同時に走らせる Cloud Agent の数（1 リポジトリ内）。
+ *
+ * グループ間に依存は無いので、直列にする理由は無い。トークンは Agent が働いた量に
+ * 比例するので、並列度を上げても費用は変わらず、待ち時間だけ縮む。
+ *
+ * プランごとの同時実行上限は公開されていない（Pro が基準、Pro+ が 3 倍、Ultra が
+ * 20 倍という比率だけが分かっている）。数を当てにいくのではなく、控えめな既定値から
+ * 始めて、上限に当たったら createWithRetry の待ちに吸収させる。
+ */
+const DEFAULT_AGENT_CONCURRENCY = 2;
 
 export type RunArgs = {
   apiKey: string;
@@ -45,6 +58,8 @@ export type RunArgs = {
   targetSha?: string;
   /** 1 回の run で開くリクエストの上限。既定 5 */
   maxPullRequests?: number;
+  /** 同時に走らせる Cloud Agent 数（1 リポジトリ内）。既定 2 */
+  agentConcurrency?: number;
   skipRemediate?: boolean;
 };
 
@@ -193,8 +208,10 @@ export async function runOrchestrator(args: RunArgs): Promise<OrchestratorState>
       `${auto.length - queue.length} already open, ${queue.length - selected.length} over budget`,
   );
 
-  state.pullRequests = [];
-  for (const decision of selected) {
+  const requests: PullRequestRecord[] = [];
+  state.pullRequests = requests;
+
+  const remediateGroup = async (decision: PolicyDecision) => {
     const pkg = decision.item.package;
     const elsewhere = selected.filter((other) => other !== decision);
     const scoped = [decision, ...deferred];
@@ -217,12 +234,12 @@ export async function runOrchestrator(args: RunArgs): Promise<OrchestratorState>
       const message = err instanceof Error ? err.message : String(err);
       console.error(`[orchestrator] fix agent failed for ${pkg}: ${message}`);
       await writeState(defaultStatePath(args.cwd), state);
-      continue;
+      return;
     }
 
     decision.outcome = "opened";
     decision.prUrl = remediation.prUrl;
-    state.pullRequests.push({
+    requests.push({
       package: pkg,
       prUrl: remediation.prUrl,
       branch: remediation.branch,
@@ -265,7 +282,25 @@ export async function runOrchestrator(args: RunArgs): Promise<OrchestratorState>
 
     // 途中で落ちても、どこまで開いたかが残るように毎回書く
     await writeState(defaultStatePath(args.cwd), state);
-  }
+  };
+
+  const concurrency = Math.max(1, args.agentConcurrency ?? DEFAULT_AGENT_CONCURRENCY);
+  console.error(
+    `[orchestrator] running up to ${concurrency} agent(s) at a time over ${selected.length} group(s)`,
+  );
+  let next = 0;
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, selected.length) }, async () => {
+      for (;;) {
+        const index = next;
+        next += 1;
+        if (index >= selected.length) return;
+        await remediateGroup(selected[index]);
+      }
+    }),
+  );
+  // 並列で回すと完了順が変わるので、読み手のために並べ直す
+  requests.sort((a, b) => a.package.localeCompare(b.package));
 
   await writeState(defaultStatePath(args.cwd), state);
   return state;

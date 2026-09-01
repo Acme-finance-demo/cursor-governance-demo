@@ -36,6 +36,10 @@ on:
         description: "1 リポジトリ 1 回あたりに開く修正リクエストの上限（空なら 5）"
         required: false
         default: ""
+      agent_concurrency:
+        description: "1 リポジトリ内で同時に走らせる Cloud Agent 数（空なら 2）"
+        required: false
+        default: ""
   push:
     paths:
       # 統制の設定を変えたら、次の夜を待たずにカバレッジを取り直す。
@@ -247,6 +251,10 @@ jobs:
       # 1 リポジトリあたり最大 3 エージェント（triage / fix / impact）が動く。
       # 並列にすると Cursor プランの同時実行 Cloud Agent 数の上限
       # （"You've reached the limit for your current plan"）に当たるので直列にする。
+      # 同時に走る Cloud Agent の総数は、ここ（リポジトリの並列度）×
+      # VULN_AGENT_CONCURRENCY（1 リポジトリ内の並列度）になる。プランごとの上限は
+      # 公開されていないので、数を当てにいかず 1 箇所（リポジトリ内）で握る。
+      # 上限に当たっても createWithRetry が待って埋め直すので、run は落ちない。
       max-parallel: 1
       matrix:
         repo: ${{ fromJSON(needs.triage-gate.outputs.matrix) }}
@@ -260,6 +268,9 @@ jobs:
       VULN_RUNTIME: cloud
       # 1 パッケージグループ = 1 リクエスト。レビューできる本数に上限を置く。
       VULN_MAX_PULL_REQUESTS: ${{ inputs.max_prs }}
+      # グループ間に依存が無いので直列にする理由が無い。トークンは Agent が働いた量に
+      # 比例するため、並列度を上げても費用は増えず待ち時間だけ縮む。
+      VULN_AGENT_CONCURRENCY: ${{ inputs.agent_concurrency }}
       # 既に開いているリクエストを Agent を起こす前に調べるために使う。
       # public リポジトリなら無くても読めるが、レート制限に当たりにくくなる。
       # private を統制対象にするなら、対象を読めるトークンに差し替えること。

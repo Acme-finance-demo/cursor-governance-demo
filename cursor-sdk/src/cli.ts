@@ -11,16 +11,21 @@ function flag(name: string): boolean {
   return process.argv.includes(name);
 }
 
-/** 1 回の run で開くリクエストの上限。--max-prs > 環境変数 > 既定(5) */
-function maxPullRequests(): number | undefined {
-  const raw = opt("--max-prs") ?? process.env.VULN_MAX_PULL_REQUESTS;
+/** フラグ > 環境変数 > 未指定（呼び先の既定値に任せる） */
+function positiveInt(flagName: string, fromEnv: string | undefined): number | undefined {
+  const raw = opt(flagName) ?? fromEnv;
   if (!raw) return undefined;
   const parsed = Number.parseInt(raw, 10);
   if (!Number.isFinite(parsed) || parsed < 1) {
-    console.error(`[cli] ignoring an unusable --max-prs / VULN_MAX_PULL_REQUESTS: ${raw}`);
+    console.error(`[cli] ignoring an unusable ${flagName}: ${raw}`);
     return undefined;
   }
   return parsed;
+}
+
+/** 1 回の run で開くリクエストの上限。--max-prs > 環境変数 > 既定(5) */
+function maxPullRequests(): number | undefined {
+  return positiveInt("--max-prs", process.env.VULN_MAX_PULL_REQUESTS);
 }
 
 function opt(name: string): string | undefined {
@@ -53,7 +58,7 @@ function defaultRuntime(): Runtime {
 
 function usage(): never {
   console.error(`Usage:
-  npx tsx src/cli.ts run --report <trivy-report.json> [--runtime local|cloud] [--skip-remediate] [--cwd <repo>] [--max-prs <n>]
+  npx tsx src/cli.ts run --report <trivy-report.json> [--runtime local|cloud] [--skip-remediate] [--cwd <repo>] [--max-prs <n>] [--agent-concurrency <n>]
   npx tsx src/cli.ts resume [--agent-id <id>] [--log <ci-log.txt>] [--note <text>]
 
 Env:
@@ -112,6 +117,7 @@ async function main(): Promise<void> {
       sha: hostContext.sha,
       targetSha: hostContext.targetSha,
       maxPullRequests: maxPullRequests(),
+      agentConcurrency: positiveInt("--agent-concurrency", process.env.VULN_AGENT_CONCURRENCY),
       skipRemediate: flag("--skip-remediate"),
     });
     return;
