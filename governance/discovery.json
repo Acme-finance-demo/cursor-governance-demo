@@ -1,19 +1,19 @@
 {
   "$comment": "統制の対象は「ここに挙げたオーナーが持っている全リポジトリ」。個々のリポジトリを登録するのではなく、run ごとに GitHub API で数え直す。増えたリポジトリは次の run から自動で入る。外す唯一の方法は governance/exemptions.json。",
-  "owners": ["naoharu", "toshi-nao"],
-  "$overridesComment": "既定のブランチ以外を見たい場合と、レポートの表示名を変えたい場合だけ書く。",
+  "owners": ["Acme-finance-demo"],
+  "$overridesComment": "既定のブランチ以外を見たい場合と、レポートの表示名を変えたい場合だけ書く。鍵の大文字小文字は無視される。",
   "overrides": {
-    "naoharu/spring-petclinic-cursor": {
+    "Acme-finance-demo/spring-petclinic-cursor": {
       "name": "spring-petclinic-cursor (Java / Maven)",
       "ref": "github-actions-security"
     },
-    "naoharu/snykt-test": { "name": "snykt-test (npm)" },
-    "toshi-nao/web-app-sample": { "name": "web-app-sample (Go + npm)" },
-    "naoharu/payments-api": { "name": "payments-api (Java / Maven)" },
-    "naoharu/web-checkout": { "name": "web-checkout (npm)" },
-    "naoharu/ledger-core": { "name": "ledger-core (Go)" },
-    "naoharu/auth-service": { "name": "auth-service (Java / Gradle)" },
-    "naoharu/partner-gateway": { "name": "partner-gateway (npm)" },
-    "naoharu/risk-scoring": { "name": "risk-scoring (Python)" }
+    "Acme-finance-demo/snykt-test": { "name": "snykt-test (npm)" },
+    "Acme-finance-demo/web-app-sample": { "name": "web-app-sample (Go + npm)" },
+    "Acme-finance-demo/payments-api": { "name": "payments-api (Java / Maven)" },
+    "Acme-finance-demo/web-checkout": { "name": "web-checkout (npm)" },
+    "Acme-finance-demo/ledger-core": { "name": "ledger-core (Go)" },
+    "Acme-finance-demo/auth-service": { "name": "auth-service (Java / Gradle)" },
+    "Acme-finance-demo/partner-gateway": { "name": "partner-gateway (npm)" },
+    "Acme-finance-demo/risk-scoring": { "name": "risk-scoring (Python)" }
   }
 }

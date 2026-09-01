@@ -66,7 +66,7 @@ permissions:
 
 jobs:
   governance:
-    uses: naoharu/cursor-governance-demo/.github/workflows/repo-scan.yml@main
+    uses: Acme-finance-demo/cursor-governance-demo/.github/workflows/repo-scan.yml@main
     with:
       remediate: ${{ github.event_name != 'pull_request' }}
     secrets: inherit

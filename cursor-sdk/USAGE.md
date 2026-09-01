@@ -106,7 +106,7 @@ npx tsx src/cli.ts run \
 GitLab CI, where the app repository clones the control plane itself (`sdk-vuln-orchestrator` in the app repo's `.gitlab-ci.yml`):
 
 ```bash
-git clone --depth 1 https://github.com/naoharu/cursor-governance-demo /tmp/control
+git clone --depth 1 https://github.com/Acme-finance-demo/cursor-governance-demo /tmp/control
 cd /tmp/control/cursor-sdk
 npm ci
 npx tsx src/cli.ts run \

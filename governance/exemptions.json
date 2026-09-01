@@ -1,17 +1,11 @@
 {
-  "$comment": "スコープから外れる唯一の方法。理由と、いつ見直すかを必ず書く。ここに無いリポジトリは、誰も何もしなくても対象に入る。archived と空のリポジトリだけは自動で飛ばす（discover.py がログに出す）。",
+  "$comment": "スコープから外れる唯一の方法。理由と、いつ見直すかを必ず書く。ここに無いリポジトリは、誰も何もしなくても対象に入る。archived とコミットの無いリポジトリだけは自動で飛ばす（discover.py がログに出す）。鍵の大文字小文字は無視される。",
   "exemptions": [
     {
-      "repo": "naoharu/cursor-governance-demo",
+      "repo": "Acme-finance-demo/cursor-governance-demo",
       "reason": "The control plane itself. It audits the fleet; it is not part of the audited fleet.",
       "approvedBy": "naoharu",
       "reviewBy": "2027-01-31"
-    },
-    {
-      "repo": "naoharu/patchwork",
-      "reason": "Upstream fork with no first-party code. 79 MB clone per run for findings we cannot act on.",
-      "approvedBy": "naoharu",
-      "reviewBy": "2026-12-31"
     }
   ]
 }

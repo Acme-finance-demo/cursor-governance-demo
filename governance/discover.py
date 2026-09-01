@@ -72,19 +72,20 @@ def has_commits(slug: str) -> bool:
 def main() -> None:
     config = json.loads((ROOT / "discovery.json").read_text())
     exemptions = {
-        entry["repo"]: entry
+        entry["repo"].lower(): entry
         for entry in json.loads((ROOT / "exemptions.json").read_text()).get("exemptions", [])
     }
-    overrides = config.get("overrides") or {}
-    wanted = {s.strip() for s in (os.environ.get("FILTER") or "").split(",") if s.strip()}
+    overrides = {key.lower(): value for key, value in (config.get("overrides") or {}).items()}
+    wanted = {s.strip().lower() for s in (os.environ.get("FILTER") or "").split(",") if s.strip()}
 
     matrix, skipped = [], []
     for owner in config.get("owners") or []:
         for repo in repos_of(owner):
             slug = repo["full_name"]
+            key = slug.lower()
 
-            if slug in exemptions:
-                reason = exemptions[slug].get("reason", "no reason recorded")
+            if key in exemptions:
+                reason = exemptions[key].get("reason", "no reason recorded")
                 skipped.append(f"{slug} — exempt: {reason}")
                 continue
             if repo.get("archived"):
@@ -95,11 +96,11 @@ def main() -> None:
             if repo.get("size", 0) == 0 and not has_commits(slug):
                 skipped.append(f"{slug} — no commits yet, nothing to scan")
                 continue
-            if wanted and slug not in wanted:
+            if wanted and key not in wanted:
                 skipped.append(f"{slug} — not in this run's filter")
                 continue
 
-            override = overrides.get(slug) or {}
+            override = overrides.get(key) or {}
             matrix.append(
                 {
                     "name": override.get("name") or slug,

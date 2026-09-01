@@ -9,7 +9,7 @@
 #     security-events: write
 #   jobs:
 #     governance:
-#       uses: naoharu/cursor-governance-demo/.github/workflows/repo-scan.yml@main
+#       uses: Acme-finance-demo/cursor-governance-demo/.github/workflows/repo-scan.yml@main
 #       with:
 #         remediate: ${{ github.event_name != 'pull_request' }}
 #       secrets: inherit
@@ -73,7 +73,7 @@ jobs:
       - name: Check out the control plane
         uses: actions/checkout@v4
         with:
-          repository: naoharu/cursor-governance-demo
+          repository: Acme-finance-demo/cursor-governance-demo
           ref: ${{ inputs.control-plane-ref }}
           path: control
       - uses: actions/setup-java@v4
