@@ -104,7 +104,9 @@ takes effect across the whole fleet on the next run — that is the point of a c
 
 ## One request per package group, and only as many as you will read
 
-A reviewer accepts or rejects one upgrade, so one pull request carries one package group.
+A reviewer accepts or rejects one upgrade, so one pull request carries one package — every
+installed version of it, since the same dependency is often present at several versions
+across manifests, and splitting those apart puts concurrent agents on the same lockfile.
 Batching every fix into a single request produced a 17,000-line lockfile diff on one
 repository and mixed Go modules with an npm lockfile — two owners, two test suites, one
 all-or-nothing merge.

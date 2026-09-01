@@ -29,6 +29,9 @@ import type {
  */
 const DEFAULT_MAX_PULL_REQUESTS = 5;
 
+/** 1 リクエストの単位。同じパッケージの複数バージョンをまとめて 1 本にする。 */
+type PackageBucket = { pkg: string; decisions: PolicyDecision[] };
+
 /**
  * 同時に走らせる Cloud Agent の数（1 リポジトリ内）。
  *
@@ -182,40 +185,66 @@ export async function runOrchestrator(args: RunArgs): Promise<OrchestratorState>
   // Agent を起こす前に、もう開いているものを落とす。同じパッケージのリクエストが
   // 既にあるなら、もう一度走らせても同じ提案が出てくるだけで、トークンだけが減る。
   const openRequests = await listAgentRequests({ host: args.host, repoUrl: args.repoUrl });
-  const queue: PolicyDecision[] = [];
+
+  // 1 リクエスト = 1 パッケージ。同じ依存が別バージョンで複数箇所に入っていることが
+  // あり（npm のマニフェストが複数ある場合など）、それを別グループとして扱うと、
+  // 同じパッケージを直す Agent が同じ run の中で並列に立ち、lockfile を別々に
+  // 再生成して同じ内容のリクエストが増える。同じ run 内なので already_open では防げない。
+  const buckets: PackageBucket[] = [];
+  const bucketOf = new Map<string, PackageBucket>();
   for (const decision of auto) {
-    const existing = findOpenRequestFor(openRequests, decision.item.package);
+    const pkg = decision.item.package;
+    let bucket = bucketOf.get(pkg);
+    if (!bucket) {
+      bucket = { pkg, decisions: [] };
+      bucketOf.set(pkg, bucket);
+      buckets.push(bucket);
+    }
+    bucket.decisions.push(decision);
+  }
+  if (buckets.length !== auto.length) {
+    console.error(
+      `[orchestrator] ${auto.length} group(s) collapse into ${buckets.length} package(s) ` +
+        `(the same dependency is installed at more than one version)`,
+    );
+  }
+
+  const queue: PackageBucket[] = [];
+  for (const bucket of buckets) {
+    const existing = findOpenRequestFor(openRequests, bucket.pkg);
     if (existing) {
-      decision.outcome = "already_open";
-      decision.prUrl = existing.url;
-      console.error(
-        `  already_open    ${decision.item.package}  ${existing.url} (no agent started)`,
-      );
+      for (const decision of bucket.decisions) {
+        decision.outcome = "already_open";
+        decision.prUrl = existing.url;
+      }
+      console.error(`  already_open    ${bucket.pkg}  ${existing.url} (no agent started)`);
       continue;
     }
-    queue.push(decision);
+    queue.push(bucket);
   }
 
   const budget = Math.max(1, args.maxPullRequests ?? DEFAULT_MAX_PULL_REQUESTS);
   const selected = queue.slice(0, budget);
-  for (const decision of queue.slice(budget)) {
-    decision.outcome = "over_budget";
+  for (const bucket of queue.slice(budget)) {
+    for (const decision of bucket.decisions) decision.outcome = "over_budget";
     console.error(
-      `  over_budget     ${decision.item.package}  deferred to a later run (budget ${budget})`,
+      `  over_budget     ${bucket.pkg}  deferred to a later run (budget ${budget})`,
     );
   }
   console.error(
     `[orchestrator] opening ${selected.length} ${args.vocab.pr}(s): ` +
-      `${auto.length - queue.length} already open, ${queue.length - selected.length} over budget`,
+      `${buckets.length - queue.length} already open, ${queue.length - selected.length} over budget`,
   );
 
   const requests: PullRequestRecord[] = [];
   state.pullRequests = requests;
 
-  const remediateGroup = async (decision: PolicyDecision) => {
-    const pkg = decision.item.package;
-    const elsewhere = selected.filter((other) => other !== decision);
-    const scoped = [decision, ...deferred];
+  const remediateGroup = async (bucket: PackageBucket) => {
+    const pkg = bucket.pkg;
+    const elsewhere = selected
+      .filter((other) => other !== bucket)
+      .flatMap((other) => other.decisions);
+    const scoped = [...bucket.decisions, ...deferred];
 
     let remediation;
     try {
@@ -231,15 +260,17 @@ export async function runOrchestrator(args: RunArgs): Promise<OrchestratorState>
         idempotencyKey: idempotencyKey(`vuln-fix-${packageSlug(pkg)}`, args),
       });
     } catch (err) {
-      decision.outcome = "failed";
+      for (const decision of bucket.decisions) decision.outcome = "failed";
       const message = err instanceof Error ? err.message : String(err);
       console.error(`[orchestrator] fix agent failed for ${pkg}: ${message}`);
       await writeState(defaultStatePath(args.cwd), state);
       return;
     }
 
-    decision.outcome = "opened";
-    decision.prUrl = remediation.prUrl;
+    for (const decision of bucket.decisions) {
+      decision.outcome = "opened";
+      decision.prUrl = remediation.prUrl;
+    }
     requests.push({
       package: pkg,
       prUrl: remediation.prUrl,

@@ -85,7 +85,8 @@ ${JSON.stringify(elsewhere.map((d) => d.item.package), null, 2)}
 `
        : ""
    }Rules:
-- Bump only the packages listed under AUTO-REMEDIATE. One ${vocab.pr} covers one package group, so a reviewer can accept or reject it on its own.
+- Bump only the packages listed under AUTO-REMEDIATE. One ${vocab.pr} covers one package, so a reviewer can accept or reject it on its own.
+- The same package may be listed more than once, installed at different versions in different manifests. Raise every one of them in this single ${vocab.pr}.
 - Only add explicit version overrides when the ecosystem-specific mechanism above cannot express the fix.
 - Do not refactor unrelated code. Do not change CI unless the bump requires it.
 - If a finding cannot be fixed by a version bump, leave a TODO in the ${vocab.prShort} body and still open the ${vocab.pr} with whatever safe upgrades you made.
