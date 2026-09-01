@@ -120,11 +120,32 @@ jobs:
         run: |
           git clone --depth 1 --branch "${{ matrix.repo.ref }}" "${{ matrix.repo.url }}.git" repo
           echo "HEAD: $(git -C repo rev-parse --short HEAD)"
+      # 対象が Java でないと setup-java の cache が
+      # 「No file in /home/runner/work/... matched to [**/pom.xml, ...]」で落ちる。
+      # フリートには npm や Go のリポジトリも入るので、ツールチェーンを見てから入れる。
+      - name: Detect the target's toolchain
+        id: toolchain
+        run: |
+          if [ -f repo/pom.xml ]; then
+            echo "java=true" >> "$GITHUB_OUTPUT"
+            echo "maven_cache=maven" >> "$GITHUB_OUTPUT"
+            echo "toolchain: Maven"
+          elif ls repo/*.gradle repo/*.gradle.kts >/dev/null 2>&1; then
+            # Gradle だけのリポジトリは pom.xml が無いので cache は付けない
+            echo "java=true" >> "$GITHUB_OUTPUT"
+            echo "maven_cache=" >> "$GITHUB_OUTPUT"
+            echo "toolchain: Gradle"
+          else
+            echo "java=false" >> "$GITHUB_OUTPUT"
+            echo "maven_cache=" >> "$GITHUB_OUTPUT"
+            echo "toolchain: not a JVM repository; skipping the JDK"
+          fi
       - uses: actions/setup-java@v4
+        if: steps.toolchain.outputs.java == 'true'
         with:
           distribution: temurin
           java-version: "17"
-          cache: maven
+          cache: ${{ steps.toolchain.outputs.maven_cache }}
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
