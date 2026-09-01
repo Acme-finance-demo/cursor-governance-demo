@@ -47,6 +47,11 @@ def decisions_by_action(state, action):
     return [d for d in (state.get("decisions") or []) if d.get("action") == action]
 
 
+def decisions_by_outcome(state, outcome):
+    """修正段で何が起きたか。policy の判断（action）とは別の軸で数える。"""
+    return [d for d in (state.get("decisions") or []) if d.get("outcome") == outcome]
+
+
 def package_label(decision):
     item = decision.get("item") or {}
     name = item.get("package", "?")
@@ -69,6 +74,8 @@ def main() -> None:
     prs = []
     deferred_detail = []
     failures = []
+    total_already_open = 0
+    total_over_budget = 0
 
     for entry in planned:
         slug = entry.get("slug")
@@ -90,18 +97,38 @@ def main() -> None:
 
         auto = decisions_by_action(state, "auto_remediate")
         deferred = decisions_by_action(state, "comment_only")
+        opened = decisions_by_outcome(state, "opened")
+        already_open = decisions_by_outcome(state, "already_open")
+        over_budget = decisions_by_outcome(state, "over_budget")
         total_auto += len(auto)
         total_deferred += len(deferred)
+        total_already_open += len(already_open)
+        total_over_budget += len(over_budget)
 
         ecosystems = ", ".join(state.get("ecosystems") or []) or "unknown"
-        pr_url = state.get("prUrl")
-        if pr_url:
-            prs.append((name, pr_url, auto))
-            pr_cell = f"[open]({pr_url})"
-        elif auto:
-            pr_cell = "agent ran, no URL"
-        else:
-            pr_cell = "not needed"
+        # 1 パッケージグループ = 1 リクエスト。古い state は prUrl 1 本しか持たない。
+        requests = state.get("pullRequests") or []
+        if not requests and state.get("prUrl"):
+            requests = [{"package": "see the request body", "prUrl": state["prUrl"]}]
+        for request in requests:
+            if request.get("prUrl"):
+                prs.append((name, request["prUrl"], request.get("package", "")))
+
+        cell_parts = []
+        if requests:
+            cell_parts.append(
+                " ".join(
+                    f"[#{r['prUrl'].rstrip('/').split('/')[-1]}]({r['prUrl']})"
+                    for r in requests
+                    if r.get("prUrl")
+                )
+                or f"{len(requests)} opened, no URL"
+            )
+        if already_open:
+            cell_parts.append(f"{len(already_open)} already open")
+        if over_budget:
+            cell_parts.append(f"{len(over_budget)} queued")
+        pr_cell = " · ".join(cell_parts) or ("agent ran, no URL" if auto else "not needed")
 
         for decision in deferred:
             deferred_detail.append((name, decision))
@@ -129,16 +156,18 @@ def main() -> None:
         f"(CRITICAL **{totals['CRITICAL']}**, HIGH {totals['HIGH']}, MEDIUM {totals['MEDIUM']})",
         f"- Package groups auto-remediated by policy: **{total_auto}**",
         f"- Package groups left for a human: **{total_deferred}**",
-        f"- Fix pull requests opened: **{len(prs)}**",
+        f"- Fix pull requests opened: **{len(prs)}** (one per package group)",
+        f"- Package groups skipped because a request was already open: **{total_already_open}** "
+        f"— no agent was started for these",
+        f"- Package groups queued for a later run (per-run limit): **{total_over_budget}**",
     ]
     if run_url:
         lines += [f"- Workflow run: {run_url}"]
 
     if prs:
         lines += ["", "### Fix pull requests", ""]
-        for name, pr_url, auto in prs:
-            packages = ", ".join(package_label(d) for d in auto) or "see the PR body"
-            lines += [f"- **{name}** — {pr_url}", f"  - {packages}"]
+        for name, pr_url, package in prs:
+            lines += [f"- **{name}** — `{package or 'see the request body'}` — {pr_url}"]
 
     if deferred_detail:
         lines += [

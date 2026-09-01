@@ -77,10 +77,29 @@ export type TriageReport = {
 
 export type PolicyAction = "auto_remediate" | "comment_only";
 
+/**
+ * 修正段で実際に何が起きたか。policy の判断（action）とは別の軸。
+ * already_open は「もう開いているので Agent を起こさなかった」= トークンを使っていない。
+ * over_budget は「1 回あたりの上限に達したので次回に回した」。
+ */
+export type RemediationOutcome = "opened" | "already_open" | "over_budget" | "failed";
+
 export type PolicyDecision = {
   action: PolicyAction;
   reason: string;
   item: TriageItem;
+  outcome?: RemediationOutcome;
+  /** outcome が opened / already_open のときのリクエスト URL */
+  prUrl?: string;
+};
+
+export type PullRequestRecord = {
+  /** どのパッケージグループに対する 1 本か */
+  package: string;
+  prUrl?: string;
+  branch?: string;
+  agentId: string;
+  runId: string;
 };
 
 /** フリート横断レポート用の集計。 */
@@ -102,6 +121,8 @@ export type OrchestratorState = {
   sha?: string;
   /** 分析した対象リポジトリのコミット。PR がどの状態に対する提案かを固定する */
   targetSha?: string;
+  /** この run で開いたリクエスト。パッケージグループごとに 1 本 */
+  pullRequests?: PullRequestRecord[];
   triageAgentId?: string;
   triageRunId?: string;
   remediationAgentId?: string;

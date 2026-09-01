@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { resumeAgent, runAgent } from "./agent.ts";
 import { groupByPackage, parseFindings } from "./parse-report.ts";
+import { findOpenRequestFor, listAgentRequests } from "./open-requests.ts";
 import { decideAll } from "./policy.ts";
 import {
   assertTriageReport,
@@ -16,8 +17,16 @@ import type {
   Host,
   HostVocab,
   OrchestratorState,
+  PolicyDecision,
   Runtime,
 } from "./types.ts";
+
+/**
+ * 1 回の run で開くリクエストの上限。パッケージグループごとに 1 本にすると
+ * レビューはしやすくなるが、何十本も開いたら誰も見ない。上限を超えた分は
+ * over_budget として次の run に回す。
+ */
+const DEFAULT_MAX_PULL_REQUESTS = 5;
 
 export type RunArgs = {
   apiKey: string;
@@ -34,8 +43,15 @@ export type RunArgs = {
   sha?: string;
   /** 監査対象リポジトリの HEAD */
   targetSha?: string;
+  /** 1 回の run で開くリクエストの上限。既定 5 */
+  maxPullRequests?: number;
   skipRemediate?: boolean;
 };
+
+/** org.apache.logging.log4j:log4j-core → org-apache-logging-log4j-log4j-core */
+function packageSlug(pkg: string): string {
+  return pkg.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
 
 /** github.com/owner/repo → owner-repo。冪等キーを対象リポジトリごとに分けるため。 */
 function repoSlug(repoUrl: string): string {
@@ -70,7 +86,7 @@ export async function runOrchestrator(args: RunArgs): Promise<OrchestratorState>
       findings: { total: 0, bySeverity: {}, packageGroups: 0 },
       pipelineId: args.pipelineId,
       sha: args.sha,
-      targetSha: args.targetSha,
+    targetSha: args.targetSha,
       decisions: [],
     };
     await writeState(defaultStatePath(args.cwd), empty);
@@ -131,7 +147,7 @@ export async function runOrchestrator(args: RunArgs): Promise<OrchestratorState>
     findings: findingSummary,
     pipelineId: args.pipelineId,
     sha: args.sha,
-      targetSha: args.targetSha,
+    targetSha: args.targetSha,
     triageAgentId: triage.agentId,
     triageRunId: triage.runId,
     decisions,
@@ -147,45 +163,108 @@ export async function runOrchestrator(args: RunArgs): Promise<OrchestratorState>
     return state;
   }
 
-  const remediation = await runAgent({
-    apiKey: args.apiKey,
-    name: "vuln-remediate",
-    prompt: remediatePrompt(decisions, args.vocab, args.ecosystems),
-    runtime: args.runtime,
-    cwd: args.cwd,
-    repoUrl: args.repoUrl,
-    startingRef: args.startingRef,
-    autoCreatePR: args.runtime === "cloud",
-    idempotencyKey: idempotencyKey("vuln-fix", args),
-  });
+  // Agent を起こす前に、もう開いているものを落とす。同じパッケージのリクエストが
+  // 既にあるなら、もう一度走らせても同じ提案が出てくるだけで、トークンだけが減る。
+  const openRequests = await listAgentRequests({ host: args.host, repoUrl: args.repoUrl });
+  const queue: PolicyDecision[] = [];
+  for (const decision of auto) {
+    const existing = findOpenRequestFor(openRequests, decision.item.package);
+    if (existing) {
+      decision.outcome = "already_open";
+      decision.prUrl = existing.url;
+      console.error(
+        `  already_open    ${decision.item.package}  ${existing.url} (no agent started)`,
+      );
+      continue;
+    }
+    queue.push(decision);
+  }
 
-  state.remediationAgentId = remediation.agentId;
-  state.remediationRunId = remediation.runId;
-  state.prUrl = remediation.prUrl;
-  state.branch = remediation.branch;
+  const budget = Math.max(1, args.maxPullRequests ?? DEFAULT_MAX_PULL_REQUESTS);
+  const selected = queue.slice(0, budget);
+  for (const decision of queue.slice(budget)) {
+    decision.outcome = "over_budget";
+    console.error(
+      `  over_budget     ${decision.item.package}  deferred to a later run (budget ${budget})`,
+    );
+  }
+  console.error(
+    `[orchestrator] opening ${selected.length} ${args.vocab.pr}(s): ` +
+      `${auto.length - queue.length} already open, ${queue.length - selected.length} over budget`,
+  );
 
-  if (state.prUrl) console.error(`[orchestrator] ${args.vocab.prShort}: ${state.prUrl}`);
-  console.error(`[orchestrator] resume with: agentId=${state.remediationAgentId}`);
+  state.pullRequests = [];
+  for (const decision of selected) {
+    const pkg = decision.item.package;
+    const elsewhere = selected.filter((other) => other !== decision);
+    const scoped = [decision, ...deferred];
 
-  try {
-    const impact = await runAgent({
-      apiKey: args.apiKey,
-      name: "vuln-impact",
-      prompt: impactPrompt(decisions, args.vocab, args.ecosystems, state.prUrl),
-      runtime: args.runtime,
-      cwd: args.cwd,
-      repoUrl: args.repoUrl,
-      startingRef: state.branch ?? args.startingRef,
-      autoCreatePR: false,
-      prUrl: state.prUrl,
-      idempotencyKey: idempotencyKey("vuln-impact", args),
+    let remediation;
+    try {
+      remediation = await runAgent({
+        apiKey: args.apiKey,
+        name: "vuln-remediate",
+        prompt: remediatePrompt(scoped, args.vocab, args.ecosystems, elsewhere),
+        runtime: args.runtime,
+        cwd: args.cwd,
+        repoUrl: args.repoUrl,
+        startingRef: args.startingRef,
+        autoCreatePR: args.runtime === "cloud",
+        idempotencyKey: idempotencyKey(`vuln-fix-${packageSlug(pkg)}`, args),
+      });
+    } catch (err) {
+      decision.outcome = "failed";
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`[orchestrator] fix agent failed for ${pkg}: ${message}`);
+      await writeState(defaultStatePath(args.cwd), state);
+      continue;
+    }
+
+    decision.outcome = "opened";
+    decision.prUrl = remediation.prUrl;
+    state.pullRequests.push({
+      package: pkg,
+      prUrl: remediation.prUrl,
+      branch: remediation.branch,
+      agentId: remediation.agentId,
+      runId: remediation.runId,
     });
-    state.impactAgentId = impact.agentId;
-    state.impactRunId = impact.runId;
-    console.error(`[orchestrator] impact agentId=${impact.agentId}`);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error(`[orchestrator] impact analysis failed (MR still stands): ${message}`);
+    // 単一リクエスト前提のフィールドは、1 本目を入れて後方互換を保つ
+    state.remediationAgentId ??= remediation.agentId;
+    state.remediationRunId ??= remediation.runId;
+    state.prUrl ??= remediation.prUrl;
+    state.branch ??= remediation.branch;
+
+    console.error(
+      `[orchestrator] ${pkg} → ${remediation.prUrl ?? "(no URL)"}  ` +
+        `resume with: agentId=${remediation.agentId}`,
+    );
+
+    try {
+      const impact = await runAgent({
+        apiKey: args.apiKey,
+        name: "vuln-impact",
+        prompt: impactPrompt(scoped, args.vocab, args.ecosystems, remediation.prUrl),
+        runtime: args.runtime,
+        cwd: args.cwd,
+        repoUrl: args.repoUrl,
+        startingRef: remediation.branch ?? args.startingRef,
+        autoCreatePR: false,
+        prUrl: remediation.prUrl,
+        idempotencyKey: idempotencyKey(`vuln-impact-${packageSlug(pkg)}`, args),
+      });
+      state.impactAgentId ??= impact.agentId;
+      state.impactRunId ??= impact.runId;
+      console.error(`[orchestrator] impact agentId=${impact.agentId} (${pkg})`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(
+        `[orchestrator] impact analysis failed for ${pkg} (the ${args.vocab.prShort} still stands): ${message}`,
+      );
+    }
+
+    // 途中で落ちても、どこまで開いたかが残るように毎回書く
+    await writeState(defaultStatePath(args.cwd), state);
   }
 
   await writeState(defaultStatePath(args.cwd), state);

@@ -58,6 +58,8 @@ export function remediatePrompt(
   decisions: PolicyDecision[],
   vocab: HostVocab,
   ecosystems: EcosystemProfile[],
+  /** 同じ run の別リクエストで扱うグループ。触らせないために渡す */
+  elsewhere: PolicyDecision[] = [],
 ): string {
   const auto = decisions.filter((d) => d.action === "auto_remediate");
   const deferred = decisions.filter((d) => d.action === "comment_only");
@@ -75,7 +77,15 @@ ${JSON.stringify(deferred, null, 2)}
 This repository's ecosystems and how upgrades must be applied:
 ${describeEcosystems(ecosystems)}
 
-Rules:
+${
+     elsewhere.length > 0
+       ? `Being handled in separate ${vocab.pr}s in this same run. Leave them exactly as they are:
+${JSON.stringify(elsewhere.map((d) => d.item.package), null, 2)}
+
+`
+       : ""
+   }Rules:
+- Bump only the packages listed under AUTO-REMEDIATE. One ${vocab.pr} covers one package group, so a reviewer can accept or reject it on its own.
 - Only add explicit version overrides when the ecosystem-specific mechanism above cannot express the fix.
 - Do not refactor unrelated code. Do not change CI unless the bump requires it.
 - If a finding cannot be fixed by a version bump, leave a TODO in the ${vocab.prShort} body and still open the ${vocab.pr} with whatever safe upgrades you made.

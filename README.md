@@ -102,6 +102,25 @@ hold:
 Everything else is reported, never silently upgraded. Widening the rule is one line, and it
 takes effect across the whole fleet on the next run — that is the point of a control plane.
 
+## One request per package group, and only as many as you will read
+
+A reviewer accepts or rejects one upgrade, so one pull request carries one package group.
+Batching every fix into a single request produced a 17,000-line lockfile diff on one
+repository and mixed Go modules with an npm lockfile — two owners, two test suites, one
+all-or-nothing merge.
+
+Splitting alone would trade that for dozens of requests nobody reads, so two limits apply
+before any agent starts:
+
+- **A per-run budget.** At most `VULN_MAX_PULL_REQUESTS` requests per repository per run
+  (`--max-prs`, default 5, `max_prs` on a manual workflow run). The rest are recorded as
+  `over_budget` and picked up by a later run.
+- **Nothing is proposed twice.** Open requests on branches under `cursor/` are listed first
+  (`VULN_AGENT_BRANCH_PREFIX`), and a package group already covered by one is recorded as
+  `already_open`. **No agent is started for it, so it costs nothing.**
+
+The roll-up report shows all three outcomes, so a queue is visible rather than silent.
+
 ## Setup
 
 1. **Settings → Secrets and variables → Actions** here → add `CURSOR_API_KEY` (from the

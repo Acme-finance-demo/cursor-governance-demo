@@ -11,6 +11,18 @@ function flag(name: string): boolean {
   return process.argv.includes(name);
 }
 
+/** 1 回の run で開くリクエストの上限。--max-prs > 環境変数 > 既定(5) */
+function maxPullRequests(): number | undefined {
+  const raw = opt("--max-prs") ?? process.env.VULN_MAX_PULL_REQUESTS;
+  if (!raw) return undefined;
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isFinite(parsed) || parsed < 1) {
+    console.error(`[cli] ignoring an unusable --max-prs / VULN_MAX_PULL_REQUESTS: ${raw}`);
+    return undefined;
+  }
+  return parsed;
+}
+
 function opt(name: string): string | undefined {
   const index = process.argv.indexOf(name);
   if (index === -1) return undefined;
@@ -41,7 +53,7 @@ function defaultRuntime(): Runtime {
 
 function usage(): never {
   console.error(`Usage:
-  npx tsx src/cli.ts run --report <trivy-report.json> [--runtime local|cloud] [--skip-remediate] [--cwd <repo>]
+  npx tsx src/cli.ts run --report <trivy-report.json> [--runtime local|cloud] [--skip-remediate] [--cwd <repo>] [--max-prs <n>]
   npx tsx src/cli.ts resume [--agent-id <id>] [--log <ci-log.txt>] [--note <text>]
 
 Env:
@@ -99,6 +111,7 @@ async function main(): Promise<void> {
       pipelineId: hostContext.pipelineId,
       sha: hostContext.sha,
       targetSha: hostContext.targetSha,
+      maxPullRequests: maxPullRequests(),
       skipRemediate: flag("--skip-remediate"),
     });
     return;

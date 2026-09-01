@@ -32,6 +32,10 @@ on:
         type: boolean
         required: false
         default: false
+      max_prs:
+        description: "1 リポジトリ 1 回あたりに開く修正リクエストの上限（空なら 5）"
+        required: false
+        default: ""
   push:
     paths:
       # 統制の設定を変えたら、次の夜を待たずにカバレッジを取り直す。
@@ -254,6 +258,12 @@ jobs:
       CURSOR_STARTING_REF: ${{ matrix.repo.ref }}
       VULN_HOST: github
       VULN_RUNTIME: cloud
+      # 1 パッケージグループ = 1 リクエスト。レビューできる本数に上限を置く。
+      VULN_MAX_PULL_REQUESTS: ${{ inputs.max_prs }}
+      # 既に開いているリクエストを Agent を起こす前に調べるために使う。
+      # public リポジトリなら無くても読めるが、レート制限に当たりにくくなる。
+      # private を統制対象にするなら、対象を読めるトークンに差し替えること。
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Check for CURSOR_API_KEY
         id: guard
