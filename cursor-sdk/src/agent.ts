@@ -40,6 +40,15 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const messageOf = (err: unknown) => (err instanceof Error ? err.message : String(err));
 
+/**
+ * Agent が既存のブランチ・PR を再利用したときは、作成者ではないので target に
+ * branchName / prUrl が入らない。その場合でも Agent は自分の報告文に PR の URL を
+ * 書くので、そこから拾う。構造化された値があればそちらを優先する。
+ */
+const PR_URL = /https:\/\/[^\s)\]]+?\/(?:pull\/\d+|-\/merge_requests\/\d+)/;
+
+const prUrlIn = (text: string) => text.match(PR_URL)?.[0];
+
 type CloudAgentSnapshot = {
   status?: string;
   target?: { prUrl?: string; branchName?: string };
@@ -189,10 +198,11 @@ async function streamAndWait(agent: SDKAgent, prompt: string, apiKey: string) {
           `[sdk] the run stream was released before we finished reading it; ` +
             `recovered the result from the agent's conversation (${agent.agentId})`,
         );
+        const text = recovered.text || streamed;
         return {
           runId: result.id,
-          text: recovered.text || streamed,
-          prUrl: recovered.prUrl,
+          text,
+          prUrl: recovered.prUrl ?? prUrlIn(text),
           branch: recovered.branch,
         };
       }
@@ -203,10 +213,11 @@ async function streamAndWait(agent: SDKAgent, prompt: string, apiKey: string) {
   }
 
   const branch = result.git?.branches?.[0];
+  const text = result.result ?? streamed;
   return {
     runId: result.id,
-    text: result.result ?? streamed,
-    prUrl: branch?.prUrl,
+    text,
+    prUrl: branch?.prUrl ?? prUrlIn(text),
     branch: branch?.branch,
   };
 }
