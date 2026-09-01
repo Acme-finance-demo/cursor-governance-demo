@@ -251,7 +251,7 @@ export async function runOrchestrator(args: RunArgs): Promise<OrchestratorState>
       remediation = await runAgent({
         apiKey: args.apiKey,
         name: "vuln-remediate",
-        prompt: remediatePrompt(scoped, args.vocab, args.ecosystems, elsewhere),
+        prompt: remediatePrompt(scoped, args.vocab, args.ecosystems, elsewhere, args.startingRef),
         runtime: args.runtime,
         cwd: args.cwd,
         repoUrl: args.repoUrl,
@@ -293,7 +293,13 @@ export async function runOrchestrator(args: RunArgs): Promise<OrchestratorState>
       const impact = await runAgent({
         apiKey: args.apiKey,
         name: "vuln-impact",
-        prompt: impactPrompt(scoped, args.vocab, args.ecosystems, remediation.prUrl),
+        prompt: impactPrompt(
+          scoped,
+          args.vocab,
+          args.ecosystems,
+          remediation.prUrl,
+          remediation.branch ?? args.startingRef,
+        ),
         runtime: args.runtime,
         cwd: args.cwd,
         repoUrl: args.repoUrl,

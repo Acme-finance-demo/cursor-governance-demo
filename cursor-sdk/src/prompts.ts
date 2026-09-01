@@ -60,6 +60,8 @@ export function remediatePrompt(
   ecosystems: EcosystemProfile[],
   /** 同じ run の別リクエストで扱うグループ。触らせないために渡す */
   elsewhere: PolicyDecision[] = [],
+  /** 作業を始める前に合わせるべきリモートの ref */
+  startingRef = "main",
 ): string {
   const auto = decisions.filter((d) => d.action === "auto_remediate");
   const deferred = decisions.filter((d) => d.action === "comment_only");
@@ -85,6 +87,11 @@ ${JSON.stringify(elsewhere.map((d) => d.item.package), null, 2)}
 `
        : ""
    }Rules:
+- **Start from the current tip.** The working copy you are given may be an older snapshot of
+  this repository than \`origin/${startingRef}\`. Before editing anything, run
+  \`git fetch origin\` and \`git reset --hard origin/${startingRef}\`, then \`git log -1 --stat\`
+  to confirm what you are on. Applying a fix to a stale tree produces a request whose diff
+  and analysis do not match the repository.
 - Bump only the packages listed under AUTO-REMEDIATE. One ${vocab.pr} covers one package, so a reviewer can accept or reject it on its own.
 - The same package may be listed more than once, installed at different versions in different manifests. Raise every one of them in this single ${vocab.pr}.
 - Only add explicit version overrides when the ecosystem-specific mechanism above cannot express the fix.
@@ -100,6 +107,8 @@ export function impactPrompt(
   vocab: HostVocab,
   ecosystems: EcosystemProfile[],
   prUrl?: string,
+  /** 読む前に合わせるべきリモートの ref */
+  startingRef = "main",
 ): string {
   const auto = decisions.filter((d) => d.action === "auto_remediate");
   const target = prUrl
@@ -111,6 +120,11 @@ If the ${vocab.prShort} closes or mentions a ${vocab.issue}, append the same Eng
   return `You are a review assistant for dependency upgrades in a ${ecosystemLabels(ecosystems)} repository.
 
 Do not edit application code. Do not commit. Do not change the dependency manifests. Do not post a ${vocab.comment}.
+
+The working copy you are given may be an older snapshot than \`origin/${startingRef}\`. Run
+\`git fetch origin\` and \`git reset --hard origin/${startingRef}\` before you read anything, so
+the call sites you report are the ones that exist. Reading a stale tree is how an analysis ends
+up claiming a repository has no source.
 
 ${target}
 
