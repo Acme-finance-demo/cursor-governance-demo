@@ -90,6 +90,38 @@ application team can opt in to scanning without holding a key.
 - A roll-up report in the job summary and as an Issue here: per-repository findings, what
   was auto-fixed, what was deferred and why, and links to every fix PR
 
+## The snapshot report on Pages
+
+A run answers "what happened tonight." The question "how much does this organization have
+open *right now*" wants one page, so there is a generator that turns a run's artifacts into
+a static report published on GitHub Pages:
+
+<https://acme-finance-demo.github.io/cursor-governance-demo/>
+
+It is a **snapshot, not a dashboard** — it shows the fleet as of the scan it was built
+from and does not change until it is rebuilt. That is deliberate: the page has no backend,
+no API key, and nothing to keep running.
+
+```bash
+gh run download <run-id> -D artifacts            # scan-state / fleet-state / trivy-report
+gh api "repos/$OWNER/$REPO/pulls?state=open" ... > artifacts/open-prs.json   # optional
+
+python3 governance/collect-snapshot.py --artifacts artifacts --out docs/snapshot.json \
+  --run-id <run-id> --run-url <run-url>
+python3 governance/verify-links.py --snapshot docs/snapshot.json
+python3 governance/render-vuln-page.py --snapshot docs/snapshot.json --out docs
+```
+
+`verify-links.py` is not optional decoration. Trivy points every finding at
+`avd.aquasec.com`, which has no page yet for recently published CVEs, so the step requests
+each advisory URL and rewrites the 404s to NVD (or to the GitHub Advisory Database for a
+GHSA). It distinguishes a 403 bot check from a real 404 and retries rather than dropping a
+link that exists.
+
+Every number on the page is derived from the Trivy findings themselves rather than from a
+state file's summary, so the charts, the tiles and the table cannot disagree with each
+other. Pages serves `docs/` on `main`.
+
 ## Policy is code, not the agent's judgement
 
 `cursor-sdk/src/policy.ts` decides. A package is auto-remediated only when all of these
@@ -151,6 +183,10 @@ rather than by guessing the number.
 | `governance/discovery.json` | Which owners to enumerate; per-repository ref and name overrides |
 | `governance/exemptions.json` | The only way out of scope. Every entry carries a reason and a review date |
 | `governance/render-report.py` | Per-repository state files → roll-up report |
+| `governance/collect-snapshot.py` | A run's artifacts → one `snapshot.json` |
+| `governance/verify-links.py` | Requests every advisory URL; rewrites the 404s to a reachable source |
+| `governance/render-vuln-page.py` | `snapshot.json` → the static report in `docs/` |
+| `docs/` | The published snapshot report (GitHub Pages) |
 | `cursor-sdk/` | The orchestrator: triage, policy, remediation, impact analysis |
 
 Details: [cursor-sdk/USAGE.md](./cursor-sdk/USAGE.md) ·

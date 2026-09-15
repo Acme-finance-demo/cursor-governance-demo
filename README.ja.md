@@ -85,6 +85,36 @@ jobs:
 - Job Summary とこのリポジトリの Issue に出る横断レポート。リポジトリ別の検出数、
   自動修正したもの、見送ったものとその理由、全修正 PR へのリンク
 
+## Pages に置く断面レポート
+
+1 回の run が答えるのは「今夜どうだったか」で、「この組織に**今**どれだけ開いているか」は
+1 枚のページで見たい。run の成果物から静的なレポートを組み立てて GitHub Pages に置く
+ジェネレータがある:
+
+<https://acme-finance-demo.github.io/cursor-governance-demo/>
+
+これは**断面であって監視画面ではない**。組み立てに使ったスキャン時点のフリートを写して
+いるだけで、作り直すまで変わらない。バックエンドも API キーも常駐プロセスも要らない、
+というのがこの作りの狙い。
+
+```bash
+gh run download <run-id> -D artifacts            # scan-state / fleet-state / trivy-report
+gh api "repos/$OWNER/$REPO/pulls?state=open" ... > artifacts/open-prs.json   # 任意
+
+python3 governance/collect-snapshot.py --artifacts artifacts --out docs/snapshot.json \
+  --run-id <run-id> --run-url <run-url>
+python3 governance/verify-links.py --snapshot docs/snapshot.json
+python3 governance/render-vuln-page.py --snapshot docs/snapshot.json --out docs
+```
+
+`verify-links.py` は飾りではない。Trivy は全件を `avd.aquasec.com` に向けるが、公表された
+ばかりの CVE はあちらにページが無く 404 になるので、アドバイザリ URL を実際に叩いて 404 を
+NVD（GHSA なら GitHub Advisory Database）に差し替える。403 のボット判定と本物の 404 を
+区別して待って引き直すので、存在するリンクを落とさない。
+
+ページ上のどの数字も state のサマリではなく Trivy の検出そのものから数えているため、
+グラフ・タイル・表が食い違うことがない。Pages は `main` の `docs/` を配信する。
+
 ## ポリシーはコードにある（エージェントの判断ではない）
 
 判定は `cursor-sdk/src/policy.ts` です。次をすべて満たすときだけ自動修正します。
