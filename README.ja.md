@@ -88,14 +88,20 @@ jobs:
 ## Pages に置く断面レポート
 
 1 回の run が答えるのは「今夜どうだったか」で、「この組織に**今**どれだけ開いているか」は
-1 枚のページで見たい。run の成果物から静的なレポートを組み立てて GitHub Pages に置く
-ジェネレータがある:
+1 枚のページで見たい。fleet のたびに成果物から静的レポートを組み立て、GitHub Pages
+（`main` の `docs/`）へ押し戻す:
 
 <https://acme-finance-demo.github.io/cursor-governance-demo/>
 
+`fleet-governance.yml` の `pages` ジョブが、scan / remediate / report のあとで
+`collect-snapshot.py` → `verify-links.py` → `render-vuln-page.py` を回して `docs/` を
+コミットする。触るのは `docs/` だけなので、fleet ワークフローは再起動しない。
+
 これは**断面であって監視画面ではない**。組み立てに使ったスキャン時点のフリートを写して
-いるだけで、作り直すまで変わらない。バックエンドも API キーも常駐プロセスも要らない、
-というのがこの作りの狙い。
+いるだけで、次の run が作り直すまで変わらない。バックエンドも API キーも常駐プロセスも
+要らない、というのがこの作りの狙い。
+
+過去の run から手で作り直す場合:
 
 ```bash
 gh run download <run-id> -D artifacts            # scan-state / fleet-state / trivy-report
@@ -113,7 +119,7 @@ NVD（GHSA なら GitHub Advisory Database）に差し替える。403 のボッ�
 区別して待って引き直すので、存在するリンクを落とさない。
 
 ページ上のどの数字も state のサマリではなく Trivy の検出そのものから数えているため、
-グラフ・タイル・表が食い違うことがない。Pages は `main` の `docs/` を配信する。
+グラフ・タイル・表が食い違うことがない。
 
 ## ポリシーはコードにある（エージェントの判断ではない）
 
@@ -166,7 +172,7 @@ Go modules と npm の lockfile が 1 本に同居していました。所有者
 
 | パス | 役割 |
 | --- | --- |
-| `.github/workflows/fleet-governance.yml` | フリート実行。発見 → 全件を並列スキャン → CRITICAL のあるリポジトリだけ修正 → 横断レポート |
+| `.github/workflows/fleet-governance.yml` | フリート実行。発見 → 全件を並列スキャン → CRITICAL のあるリポジトリだけ修正 → 横断レポート → Pages 断面の再生成 |
 | `.github/workflows/repo-scan.yml` | アプリ側が呼ぶ再利用可能ワークフロー |
 | `governance/discover.py` | run ごとにオーナーの持ちリポジトリを数え直す |
 | `governance/discovery.json` | 数え直す対象オーナー。ref と表示名の上書き |

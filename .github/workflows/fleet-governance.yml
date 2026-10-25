@@ -374,3 +374,92 @@ jobs:
             --repo "${{ github.repository }}" \
             --title "$(cat report-title.txt)" \
             --body-file report.md
+
+  # 毎晩の断面を Pages（docs/）に焼き直す。
+  # Issue レポートが「今夜どうだったか」なら、こちらは「今どれだけ開いているか」の 1 枚。
+  # docs/ への push は governance/** を触らないので、このワークフローは再起動しない。
+  pages:
+    needs: [plan, scan, triage-gate, remediate, report]
+    if: always() && needs.plan.outputs.count != '0'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: control
+          # pages ジョブが docs/ を main に戻す。既定トークンで足りる。
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # collect-snapshot.py は `gh run download` と同じ配置を要求する
+      # （artifact 名ごとのサブディレクトリ）。merge-multiple は付けない。
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: trivy-report-*
+          path: artifacts
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: scan-state-*
+          path: artifacts
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: fleet-state-*
+          path: artifacts
+
+      - name: Collect open pull requests across the fleet
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MATRIX: ${{ needs.plan.outputs.matrix }}
+        run: |
+          set -euo pipefail
+          : > /tmp/prs.ndjson
+          for slug in $(jq -r '.[].slug' <<<"$MATRIX"); do
+            gh api --paginate "repos/${slug}/pulls?state=open&per_page=100" \
+              | jq -c --arg repo "$slug" \
+                '.[] | {repo:$repo, number, title, url:.html_url, head:.head.ref, createdAt:.created_at}' \
+              >> /tmp/prs.ndjson || true
+          done
+          if [ -s /tmp/prs.ndjson ]; then
+            jq -s '.' /tmp/prs.ndjson > artifacts/open-prs.json
+          else
+            echo '[]' > artifacts/open-prs.json
+          fi
+          echo "open PRs: $(jq 'length' artifacts/open-prs.json)"
+
+      - name: Build the Pages snapshot
+        env:
+          RUN_ID: ${{ github.run_id }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          ls -la artifacts
+          python3 control/governance/collect-snapshot.py \
+            --artifacts artifacts \
+            --out control/docs/snapshot.json \
+            --run-id "$RUN_ID" \
+            --run-url "$RUN_URL"
+          python3 control/governance/verify-links.py \
+            --snapshot control/docs/snapshot.json
+          python3 control/governance/render-vuln-page.py \
+            --snapshot control/docs/snapshot.json \
+            --out control/docs
+          # Pages 用。無くても動くが明示しておく。
+          touch control/docs/.nojekyll
+
+      - name: Publish docs/ to main
+        working-directory: control
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/snapshot.json docs/index.html docs/.nojekyll
+          if git diff --staged --quiet; then
+            echo "Pages snapshot unchanged; nothing to publish."
+            exit 0
+          fi
+          git commit -m "Rebuild vulnerability snapshot from fleet run ${{ github.run_id }}."
+          # 同じ main に並走する別ジョブがいる場合に備えて一度引き直す。
+          git pull --rebase --autostash origin main || true
+          git push origin HEAD:main

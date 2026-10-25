@@ -93,14 +93,21 @@ application team can opt in to scanning without holding a key.
 ## The snapshot report on Pages
 
 A run answers "what happened tonight." The question "how much does this organization have
-open *right now*" wants one page, so there is a generator that turns a run's artifacts into
-a static report published on GitHub Pages:
+open *right now*" wants one page, so each fleet run rebuilds a static report and pushes it
+to GitHub Pages (`docs/` on `main`):
 
 <https://acme-finance-demo.github.io/cursor-governance-demo/>
 
+The `pages` job in `fleet-governance.yml` does this after scan / remediate / report: it
+collects the run's artifacts, optionally lists open PRs across the fleet, runs
+`collect-snapshot.py` → `verify-links.py` → `render-vuln-page.py`, and commits the result.
+That commit only touches `docs/`, so it does not re-trigger the fleet workflow.
+
 It is a **snapshot, not a dashboard** — it shows the fleet as of the scan it was built
-from and does not change until it is rebuilt. That is deliberate: the page has no backend,
-no API key, and nothing to keep running.
+from and does not change until the next run rebuilds it. That is deliberate: the page has
+no backend, no API key, and nothing to keep running.
+
+To rebuild by hand from a past run:
 
 ```bash
 gh run download <run-id> -D artifacts            # scan-state / fleet-state / trivy-report
@@ -120,7 +127,7 @@ link that exists.
 
 Every number on the page is derived from the Trivy findings themselves rather than from a
 state file's summary, so the charts, the tiles and the table cannot disagree with each
-other. Pages serves `docs/` on `main`.
+other.
 
 ## Policy is code, not the agent's judgement
 
@@ -177,7 +184,7 @@ rather than by guessing the number.
 
 | Path | Role |
 | --- | --- |
-| `.github/workflows/fleet-governance.yml` | Fleet run: discover, scan every repository in parallel, remediate the ones with CRITICAL findings, then the roll-up |
+| `.github/workflows/fleet-governance.yml` | Fleet run: discover, scan every repository in parallel, remediate the ones with CRITICAL findings, roll-up Issue, rebuild Pages |
 | `.github/workflows/repo-scan.yml` | Reusable workflow application repositories call |
 | `governance/discover.py` | Enumerates the owners' repositories on every run |
 | `governance/discovery.json` | Which owners to enumerate; per-repository ref and name overrides |
