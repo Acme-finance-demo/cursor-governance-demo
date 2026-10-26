@@ -491,27 +491,29 @@
   .seq-row {
     position: relative;
     z-index: 1;
-    display: grid;
-    grid-template-columns: 12.5% 1fr;
-    align-items: center;
-    min-height: 1.85rem;
+    min-height: 1.9rem;
   }
 
   .seq-row .n {
-    font-size: 0.65rem;
+    position: absolute;
+    left: 0;
+    top: 0.35rem;
+    width: 1.1rem;
+    font-size: 0.62rem;
     color: var(--accent);
     font-weight: 700;
     text-align: center;
+    z-index: 2;
   }
 
   .seq-msg {
     position: relative;
-    height: 1.85rem;
+    height: 1.9rem;
   }
 
   .seq-msg .wire {
     position: absolute;
-    top: 55%;
+    top: 58%;
     height: 1px;
     background: rgba(242, 240, 233, 0.45);
   }
@@ -535,38 +537,38 @@
 
   .seq-msg .label {
     position: absolute;
-    top: 0.05rem;
+    top: 0.08rem;
     font-size: 0.68rem;
     color: var(--ink);
     white-space: nowrap;
-    background: rgba(14, 20, 18, 0.82);
-    padding: 0 0.25rem;
+    background: rgba(14, 20, 18, 0.85);
+    padding: 0 0.28rem;
     line-height: 1.2;
   }
 
-  /* from-to as % of the 4-lane area (0=Actions,1=Apps,2=Trivy,3=Policy/GitHub) */
+  /* lanes centered at 12.5 / 37.5 / 62.5 / 87.5% of seq width */
   .seq-msg.f0t1 .wire { left: 12.5%; width: 25%; }
-  .seq-msg.f0t1 .label { left: 18%; }
+  .seq-msg.f0t1 .label { left: 16%; }
   .seq-msg.f0t2 .wire { left: 12.5%; width: 50%; }
-  .seq-msg.f0t2 .label { left: 28%; }
+  .seq-msg.f0t2 .label { left: 26%; }
   .seq-msg.f2t0 .wire { left: 12.5%; width: 50%; }
-  .seq-msg.f2t0 .label { left: 28%; }
+  .seq-msg.f2t0 .label { left: 26%; }
   .seq-msg.f2t0 .wire::after {
     left: -1px; right: auto;
     border-left: 0;
     border-right: 6px solid rgba(212, 160, 23, 0.85);
   }
   .seq-msg.f0t3 .wire { left: 12.5%; width: 75%; }
-  .seq-msg.f0t3 .label { left: 38%; }
+  .seq-msg.f0t3 .label { left: 30%; }
   .seq-msg.f3t0 .wire { left: 12.5%; width: 75%; }
-  .seq-msg.f3t0 .label { left: 38%; }
+  .seq-msg.f3t0 .label { left: 30%; }
   .seq-msg.f3t0 .wire::after {
     left: -1px; right: auto;
     border-left: 0;
     border-right: 6px solid rgba(212, 160, 23, 0.85);
   }
   .seq-msg.f0t1b .wire { left: 12.5%; width: 25%; }
-  .seq-msg.f0t1b .label { left: 16%; }
+  .seq-msg.f0t1b .label { left: 15%; }
 
   .seq-note {
     margin-top: 0.7rem;
