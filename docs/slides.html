@@ -44,7 +44,6 @@
     z-index: 0;
   }
 
-  /* subtle grid atmosphere */
   body::after {
     content: "";
     position: fixed;
@@ -71,7 +70,8 @@
     inset: 0;
     display: grid;
     align-content: center;
-    padding: clamp(2rem, 6vw, 5rem) clamp(2rem, 8vw, 7rem);
+    padding: clamp(1.75rem, 5vw, 4rem) clamp(1.75rem, 7vw, 6rem);
+    padding-bottom: 4rem;
     opacity: 0;
     visibility: hidden;
     transform: translateY(18px);
@@ -88,11 +88,11 @@
     animation: rise 0.55s ease both;
   }
   .slide.active .reveal:nth-child(1) { animation-delay: 0.05s; }
-  .slide.active .reveal:nth-child(2) { animation-delay: 0.14s; }
-  .slide.active .reveal:nth-child(3) { animation-delay: 0.23s; }
-  .slide.active .reveal:nth-child(4) { animation-delay: 0.32s; }
-  .slide.active .reveal:nth-child(5) { animation-delay: 0.41s; }
-  .slide.active .reveal:nth-child(6) { animation-delay: 0.5s; }
+  .slide.active .reveal:nth-child(2) { animation-delay: 0.12s; }
+  .slide.active .reveal:nth-child(3) { animation-delay: 0.19s; }
+  .slide.active .reveal:nth-child(4) { animation-delay: 0.26s; }
+  .slide.active .reveal:nth-child(5) { animation-delay: 0.33s; }
+  .slide.active .reveal:nth-child(6) { animation-delay: 0.4s; }
 
   @keyframes rise {
     from { opacity: 0; transform: translateY(14px); }
@@ -100,38 +100,44 @@
   }
 
   .kicker {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--accent);
     font-weight: 600;
-    margin-bottom: 1.1rem;
+    margin-bottom: 0.95rem;
   }
 
   h1, h2 {
     font-family: Newsreader, "Times New Roman", serif;
     font-weight: 600;
     letter-spacing: -0.02em;
-    line-height: 1.15;
+    line-height: 1.28;
+    max-width: min(46rem, 92vw);
+  }
+
+  /* 自動改行させず、.line で明示した切れ目だけ改行する */
+  h1 .line,
+  h2 .line {
+    display: block;
+    white-space: nowrap;
   }
 
   h1 {
-    font-size: clamp(2.4rem, 5.5vw, 4.2rem);
-    max-width: 14ch;
-    margin-bottom: 1.25rem;
+    font-size: clamp(1.75rem, 3.6vw, 2.75rem);
+    margin-bottom: 1.1rem;
   }
 
   h2 {
-    font-size: clamp(1.9rem, 4.2vw, 3.1rem);
-    max-width: 18ch;
-    margin-bottom: 1.4rem;
+    font-size: clamp(1.45rem, 2.8vw, 2.15rem);
+    margin-bottom: 1.15rem;
   }
 
   .lede {
-    font-size: clamp(1.05rem, 1.6vw, 1.35rem);
+    font-size: clamp(0.98rem, 1.35vw, 1.15rem);
     color: var(--muted);
-    max-width: 36rem;
-    line-height: 1.65;
+    max-width: 40rem;
+    line-height: 1.7;
   }
 
   .lede strong { color: var(--ink); font-weight: 600; }
@@ -139,15 +145,15 @@
   ul.points {
     list-style: none;
     display: grid;
-    gap: 0.95rem;
-    max-width: 40rem;
-    margin-top: 0.5rem;
+    gap: 0.8rem;
+    max-width: 42rem;
+    margin-top: 0.35rem;
   }
 
   ul.points li {
     position: relative;
-    padding-left: 1.6rem;
-    font-size: clamp(1.05rem, 1.5vw, 1.3rem);
+    padding-left: 1.45rem;
+    font-size: clamp(0.98rem, 1.3vw, 1.12rem);
     line-height: 1.55;
     color: var(--ink);
   }
@@ -157,8 +163,8 @@
     position: absolute;
     left: 0;
     top: 0.55em;
-    width: 0.55rem;
-    height: 0.55rem;
+    width: 0.5rem;
+    height: 0.5rem;
     background: var(--accent);
     border-radius: 1px;
   }
@@ -172,29 +178,30 @@
   .compare {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: clamp(1rem, 3vw, 2rem);
-    margin-top: 0.5rem;
-    max-width: 56rem;
+    gap: clamp(1rem, 2.5vw, 1.75rem);
+    margin-top: 0.35rem;
+    max-width: 52rem;
   }
 
   @media (max-width: 800px) {
     .compare { grid-template-columns: 1fr; }
+    h1 .line, h2 .line { white-space: normal; }
   }
 
   .panel {
     background: linear-gradient(165deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
     border: 1px solid var(--line);
     border-radius: 4px;
-    padding: 1.4rem 1.5rem 1.5rem;
-    min-height: 12rem;
+    padding: 1.25rem 1.35rem 1.35rem;
+    min-height: 10.5rem;
   }
 
   .panel .label {
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     letter-spacing: 0.12em;
     text-transform: uppercase;
     font-weight: 600;
-    margin-bottom: 0.85rem;
+    margin-bottom: 0.7rem;
   }
 
   .panel.bad .label { color: var(--warn); }
@@ -202,79 +209,135 @@
 
   .panel h3 {
     font-family: Newsreader, serif;
-    font-size: 1.45rem;
+    font-size: 1.25rem;
     font-weight: 600;
-    margin-bottom: 0.7rem;
+    margin-bottom: 0.55rem;
   }
 
   .panel p {
     color: var(--muted);
     line-height: 1.55;
-    font-size: 0.98rem;
+    font-size: 0.92rem;
   }
 
-  .arch {
-    display: grid;
-    gap: 0.85rem;
-    max-width: 42rem;
-    margin-top: 0.4rem;
+  /* Org 可視化 */
+  .org-frame {
+    margin-top: 0.35rem;
+    max-width: 48rem;
+    border: 1px solid rgba(212, 160, 23, 0.35);
+    border-radius: 6px;
+    background: rgba(26, 38, 33, 0.55);
+    padding: 0.9rem 1rem 1.05rem;
   }
 
-  .arch .hub {
-    background: var(--accent-soft);
-    border: 1px solid rgba(212, 160, 23, 0.45);
-    border-radius: 4px;
-    padding: 1.1rem 1.25rem;
-    font-weight: 600;
-    font-size: 1.05rem;
-  }
-
-  .arch .hub span {
-    display: block;
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: var(--muted);
-    margin-top: 0.25rem;
-  }
-
-  .arch .arrow {
-    color: var(--accent);
-    font-size: 0.9rem;
-    letter-spacing: 0.08em;
-    padding-left: 0.2rem;
-  }
-
-  .arch .fleet {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
+  .org-frame .org-label {
+    display: flex;
+    align-items: baseline;
     gap: 0.65rem;
+    margin-bottom: 0.85rem;
+    padding-bottom: 0.65rem;
+    border-bottom: 1px solid var(--line);
   }
 
-  .arch .fleet div {
+  .org-frame .org-label .tag {
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .org-frame .org-label .name {
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  .org-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.55rem;
+  }
+
+  @media (max-width: 900px) {
+    .org-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+
+  .repo {
     border: 1px solid var(--line);
     background: var(--plane);
     border-radius: 3px;
-    padding: 0.85rem 0.9rem;
-    font-size: 0.92rem;
+    padding: 0.65rem 0.55rem;
     text-align: center;
+    font-size: 0.72rem;
+    line-height: 1.35;
+    color: var(--muted);
+    min-height: 2.8rem;
+    display: grid;
+    place-content: center;
+  }
+
+  .repo.control {
+    border-color: rgba(212, 160, 23, 0.65);
+    background: var(--accent-soft);
+    color: var(--ink);
+    font-weight: 600;
+    font-size: 0.74rem;
+    position: relative;
+    box-shadow: 0 0 0 1px rgba(212, 160, 23, 0.2);
+  }
+
+  .repo.control .role {
+    display: block;
+    margin-top: 0.2rem;
+    font-size: 0.62rem;
+    font-weight: 500;
+    color: var(--accent);
+    letter-spacing: 0.04em;
+  }
+
+  .org-caption {
+    margin-top: 0.85rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.25rem;
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+
+  .org-caption span b {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .org-caption .scan-hint::before {
+    content: "↗ ";
+    color: var(--accent);
   }
 
   .flow {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.55rem;
+    gap: 0.5rem;
     align-items: center;
-    margin-top: 1.2rem;
+    margin-top: 1rem;
     max-width: 48rem;
   }
 
   .flow .step {
     background: var(--plane);
     border: 1px solid var(--line);
-    padding: 0.7rem 1rem;
+    padding: 0.6rem 0.9rem;
     border-radius: 3px;
-    font-size: 0.95rem;
+    font-size: 0.88rem;
     font-weight: 500;
+  }
+
+  .flow .step small {
+    display: block;
+    color: var(--muted);
+    font-weight: 400;
+    font-size: 0.72rem;
+    margin-top: 0.15rem;
   }
 
   .flow .step.accent {
@@ -284,21 +347,23 @@
 
   .flow .sep {
     color: var(--muted);
-    font-size: 0.85rem;
+    font-size: 0.8rem;
   }
 
   .big-number {
     font-family: Newsreader, serif;
-    font-size: clamp(3.5rem, 8vw, 6rem);
+    font-size: clamp(2.6rem, 5.5vw, 4rem);
     color: var(--accent);
     line-height: 1;
-    margin-bottom: 0.6rem;
+    margin-bottom: 0.45rem;
   }
 
   .footer-note {
-    margin-top: 2rem;
+    margin-top: 1.5rem;
     color: var(--muted);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    max-width: 42rem;
   }
 
   .footer-note a {
@@ -307,7 +372,6 @@
     text-underline-offset: 3px;
   }
 
-  /* chrome */
   .chrome {
     position: fixed;
     z-index: 5;
@@ -342,16 +406,16 @@
 
   .chrome .hint {
     color: var(--muted);
-    font-size: 0.78rem;
+    font-size: 0.75rem;
     letter-spacing: 0.04em;
   }
 
   .brand {
     position: fixed;
-    top: 1.25rem;
+    top: 1.15rem;
     left: clamp(1.2rem, 4vw, 2.5rem);
     z-index: 5;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--muted);
@@ -369,20 +433,23 @@
     <!-- 1 -->
     <section class="slide active" data-title="表紙">
       <p class="kicker reveal">Org-wide vulnerability governance</p>
-      <h1 class="reveal">セキュリティスキャンを、<br>各リポジトリに任せない。</h1>
+      <h1 class="reveal">
+        <span class="line">セキュリティスキャンを、</span>
+        <span class="line">各リポジトリに任せない。</span>
+      </h1>
       <p class="lede reveal">
-        Org 内の<strong>特定の 1 プロジェクト</strong>がコントロールプレーンになり、
-        配下のリポジトリをまとめて検査・報告・（必要なら）修正 PR まで担う。
+        同じ Organization の中に<strong>特別なプロジェクトを 1 つ</strong>置くだけ。
+        それがコントロールプレーンになり、配下をまとめて検査・報告し、必要なら修正 PR まで担う。
       </p>
     </section>
 
     <!-- 2 -->
     <section class="slide" data-title="よくあるやり方">
       <p class="kicker reveal">Before</p>
-      <h2 class="reveal">よくあるやり方の弱み</h2>
+      <h2 class="reveal"><span class="line">よくあるやり方の弱み</span></h2>
       <ul class="points">
         <li class="reveal">スキャンを<strong>各プロジェクトの CI</strong>に埋め込む</li>
-        <li class="reveal">チームごとに導入タイミングがずれ、<em>やり忘れ</em>が起きる</li>
+        <li class="reveal">チームごとに導入がずれ、<em>やり忘れ</em>が起きる</li>
         <li class="reveal">新規リポジトリは「誰かが workflow を足すまで」見えない</li>
         <li class="reveal">Org 全体の状態を一目で見る場所がない</li>
       </ul>
@@ -391,7 +458,7 @@
     <!-- 3 -->
     <section class="slide" data-title="対比">
       <p class="kicker reveal">Contrast</p>
-      <h2 class="reveal">埋め込み CI と、中央統制</h2>
+      <h2 class="reveal"><span class="line">埋め込み CI と、中央統制</span></h2>
       <div class="compare">
         <div class="panel bad reveal">
           <div class="label">分散 · 各リポジトリ CI</div>
@@ -409,7 +476,7 @@
     <!-- 4 -->
     <section class="slide" data-title="要点">
       <p class="kicker reveal">Point</p>
-      <h2 class="reveal">今回の方式のポイント</h2>
+      <h2 class="reveal"><span class="line">今回の方式のポイント</span></h2>
       <ul class="points">
         <li class="reveal">セキュリティスキャンは<strong>各プロジェクトの CI には組まない</strong></li>
         <li class="reveal">Org 内の<strong>特定 1 プロジェクト</strong>から全体をスキャンする</li>
@@ -419,35 +486,52 @@
       </ul>
     </section>
 
-    <!-- 5 -->
-    <section class="slide" data-title="構成">
-      <p class="kicker reveal">Architecture</p>
-      <h2 class="reveal">1 つのコントロールプレーン</h2>
-      <div class="arch">
-        <div class="hub reveal">
-          cursor-governance-demo
-          <span>発見 · Trivy · ポリシー · Cloud Agent · レポート / Pages</span>
+    <!-- 5：Org 可視化（ここが本題の図） -->
+    <section class="slide" data-title="Orgの中">
+      <p class="kicker reveal">Inside the organization</p>
+      <h2 class="reveal">
+        <span class="line">同じ Org に、特別なプロジェクトを</span>
+        <span class="line">1 つ置くだけでよい</span>
+      </h2>
+      <div class="org-frame reveal">
+        <div class="org-label">
+          <span class="tag">Organization</span>
+          <span class="name">Acme-finance-demo</span>
         </div>
-        <div class="arrow reveal">↓ 毎晩（と手動）· 登録不要で列挙</div>
-        <div class="fleet reveal">
-          <div>Java / Maven</div>
-          <div>npm</div>
-          <div>Go</div>
-          <div>Gradle</div>
-          <div>Python</div>
-          <div>…新規も自動</div>
+        <div class="org-grid">
+          <div class="repo">payments-api</div>
+          <div class="repo">web-checkout</div>
+          <div class="repo">auth-service</div>
+          <div class="repo">ledger-core</div>
+          <div class="repo control">
+            cursor-governance-demo
+            <span class="role">コントロールプレーン · 全体をスキャン</span>
+          </div>
+          <div class="repo">web-app-sample</div>
+          <div class="repo">risk-scoring</div>
+          <div class="repo">partner-gateway</div>
+          <div class="repo">spring-petclinic…</div>
+          <div class="repo">（ほかアプリ）</div>
+          <div class="repo">（新規も自動で対象）</div>
+          <div class="repo">…</div>
+        </div>
+        <div class="org-caption">
+          <span><b>金色の 1 枠</b>だけがスキャン側</span>
+          <span class="scan-hint">ほかの四角はアプリ。スキャナのコピーは不要</span>
         </div>
       </div>
-      <p class="footer-note reveal">アプリ側にオーケストレータは置かない。スキャンの「置き場所」はここだけ。</p>
+      <p class="footer-note reveal">
+        発見 · Trivy · ポリシー · Cloud Agent · Issue / Pages は、すべてこの 1 プロジェクトに集約する。
+      </p>
     </section>
 
     <!-- 6 -->
     <section class="slide" data-title="強制力">
       <p class="kicker reveal">Enforcement</p>
       <div class="big-number reveal">登録ゼロ</div>
-      <h2 class="reveal">やり忘れが構造的に起きない</h2>
+      <h2 class="reveal"><span class="line">やり忘れが構造的に起きない</span></h2>
       <ul class="points">
-        <li class="reveal">対象は「リスト登録」ではなく、<strong>Org 所有者の持ち物を毎回数え直す</strong></li>
+        <li class="reveal">対象はリスト登録ではなく、<strong>Org の持ち物を毎回数え直す</strong></li>
         <li class="reveal">外す唯一の出口は exemptions（理由と見直し日つき）</li>
         <li class="reveal">リポジトリが増えても、アプリチームが workflow を足す必要はない</li>
       </ul>
@@ -456,15 +540,15 @@
     <!-- 7 -->
     <section class="slide" data-title="流れ">
       <p class="kicker reveal">Nightly flow</p>
-      <h2 class="reveal">毎晩の流れ</h2>
+      <h2 class="reveal"><span class="line">毎晩の流れ</span></h2>
       <div class="flow reveal">
         <div class="step">発見</div><span class="sep">→</span>
-        <div class="step">並列スキャン<br><small style="color:var(--muted);font-weight:400">Trivy · 全件</small></div><span class="sep">→</span>
-        <div class="step">振り分け<br><small style="color:var(--muted);font-weight:400">CRITICAL のみ</small></div><span class="sep">→</span>
-        <div class="step accent">修正（任意）<br><small style="color:var(--muted);font-weight:400">Cloud Agent</small></div><span class="sep">→</span>
+        <div class="step">並列スキャン<small>Trivy · 全件</small></div><span class="sep">→</span>
+        <div class="step">振り分け<small>CRITICAL のみ</small></div><span class="sep">→</span>
+        <div class="step accent">修正（任意）<small>Cloud Agent</small></div><span class="sep">→</span>
         <div class="step accent">レポート</div>
       </div>
-      <ul class="points" style="margin-top:1.8rem">
+      <ul class="points" style="margin-top:1.4rem">
         <li class="reveal">検査は Cursor 枠を使わないので、<strong>全リポジトリ並列</strong>で回せる</li>
         <li class="reveal">Agent は「直すとき」だけ。トークンは直す回数に比例</li>
       </ul>
@@ -473,7 +557,7 @@
     <!-- 8 -->
     <section class="slide" data-title="レポート">
       <p class="kicker reveal">Reporting</p>
-      <h2 class="reveal">レポートは勝手にできる</h2>
+      <h2 class="reveal"><span class="line">レポートは勝手にできる</span></h2>
       <ul class="points">
         <li class="reveal"><em>Issue</em> — 「今夜どうだったか」の横断サマリ（毎回起票）</li>
         <li class="reveal"><em>GitHub Pages</em> — 「今どれだけ開いているか」の断面を毎 run で焼き直す</li>
@@ -488,21 +572,21 @@
     <!-- 9 -->
     <section class="slide" data-title="修正PR">
       <p class="kicker reveal">Remediation</p>
-      <h2 class="reveal">場合によっては PR も作る</h2>
+      <h2 class="reveal"><span class="line">場合によっては PR も作る</span></h2>
       <ul class="points">
         <li class="reveal">自動修正は<strong>ポリシーがコードで決める</strong>（エージェントの裁量ではない）</li>
-        <li class="reveal">既定: CRITICAL かつマイナー／パッチ上げのみ。メジャー上げは人手</li>
-        <li class="reveal">1 パッケージグループ = 1 PR。予算と「既に open」の二重提出防止つき</li>
-        <li class="reveal">スキャンだけ・修正あり、は手動実行のフラグで切り替え可能</li>
+        <li class="reveal">既定は CRITICAL かつマイナー／パッチ上げのみ。メジャー上げは人手</li>
+        <li class="reveal">1 パッケージグループ = 1 PR。予算と二重提出防止つき</li>
+        <li class="reveal">スキャンだけ／修正あり、は手動実行のフラグで切り替え可能</li>
       </ul>
     </section>
 
     <!-- 10 -->
     <section class="slide" data-title="まとめ">
       <p class="kicker reveal">Takeaway</p>
-      <h2 class="reveal">覚えること、3 つ</h2>
+      <h2 class="reveal"><span class="line">覚えること、3 つ</span></h2>
       <ul class="points">
-        <li class="reveal"><em>1.</em> スキャンの置き場所は Org 内の<strong>1 プロジェクト</strong>（各 CI ではない）</li>
+        <li class="reveal"><em>1.</em> 同じ Org に<strong>特別なプロジェクトを 1 つ</strong>置く（各 CI ではない）</li>
         <li class="reveal"><em>2.</em> 列挙ベースなので<strong>強制</strong>され、<strong>やり忘れない</strong></li>
         <li class="reveal"><em>3.</em> レポートは自動。修正 PR はポリシーが通ったときだけ</li>
       </ul>
