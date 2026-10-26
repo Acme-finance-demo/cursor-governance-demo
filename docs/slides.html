@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Org 横断の脆弱性ガバナンス — 1 つのコントロールプレーン</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+JP:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,500;6..72,600;6..72,700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e1412;
+    --bg-2: #15201c;
+    --ink: #f2f0e9;
+    --muted: #9aa89f;
+    --line: rgba(242, 240, 233, 0.12);
+    --accent: #d4a017;
+    --accent-soft: rgba(212, 160, 23, 0.16);
+    --good: #3dba7a;
+    --warn: #e07a3d;
+    --plane: #1a2621;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "IBM Plex Sans JP", system-ui, sans-serif;
+    font-weight: 400;
+    overflow: hidden;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 55% at 10% -10%, rgba(212, 160, 23, 0.14), transparent 55%),
+      radial-gradient(ellipse 60% 50% at 100% 100%, rgba(61, 186, 122, 0.08), transparent 50%),
+      linear-gradient(160deg, var(--bg) 0%, var(--bg-2) 55%, #0a100e 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* subtle grid atmosphere */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 72px 72px;
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 20%, transparent 75%);
+    opacity: 0.35;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .deck {
+    position: relative;
+    z-index: 1;
+    height: 100%;
+    width: 100%;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    align-content: center;
+    padding: clamp(2rem, 6vw, 5rem) clamp(2rem, 8vw, 7rem);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(18px);
+    transition: opacity 0.45s ease, transform 0.45s ease, visibility 0.45s;
+  }
+
+  .slide.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .slide.active .reveal {
+    animation: rise 0.55s ease both;
+  }
+  .slide.active .reveal:nth-child(1) { animation-delay: 0.05s; }
+  .slide.active .reveal:nth-child(2) { animation-delay: 0.14s; }
+  .slide.active .reveal:nth-child(3) { animation-delay: 0.23s; }
+  .slide.active .reveal:nth-child(4) { animation-delay: 0.32s; }
+  .slide.active .reveal:nth-child(5) { animation-delay: 0.41s; }
+  .slide.active .reveal:nth-child(6) { animation-delay: 0.5s; }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .kicker {
+    font-size: 0.85rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 1.1rem;
+  }
+
+  h1, h2 {
+    font-family: Newsreader, "Times New Roman", serif;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+  }
+
+  h1 {
+    font-size: clamp(2.4rem, 5.5vw, 4.2rem);
+    max-width: 14ch;
+    margin-bottom: 1.25rem;
+  }
+
+  h2 {
+    font-size: clamp(1.9rem, 4.2vw, 3.1rem);
+    max-width: 18ch;
+    margin-bottom: 1.4rem;
+  }
+
+  .lede {
+    font-size: clamp(1.05rem, 1.6vw, 1.35rem);
+    color: var(--muted);
+    max-width: 36rem;
+    line-height: 1.65;
+  }
+
+  .lede strong { color: var(--ink); font-weight: 600; }
+
+  ul.points {
+    list-style: none;
+    display: grid;
+    gap: 0.95rem;
+    max-width: 40rem;
+    margin-top: 0.5rem;
+  }
+
+  ul.points li {
+    position: relative;
+    padding-left: 1.6rem;
+    font-size: clamp(1.05rem, 1.5vw, 1.3rem);
+    line-height: 1.55;
+    color: var(--ink);
+  }
+
+  ul.points li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.55em;
+    width: 0.55rem;
+    height: 0.55rem;
+    background: var(--accent);
+    border-radius: 1px;
+  }
+
+  ul.points li em {
+    font-style: normal;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(1rem, 3vw, 2rem);
+    margin-top: 0.5rem;
+    max-width: 56rem;
+  }
+
+  @media (max-width: 800px) {
+    .compare { grid-template-columns: 1fr; }
+  }
+
+  .panel {
+    background: linear-gradient(165deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 1.4rem 1.5rem 1.5rem;
+    min-height: 12rem;
+  }
+
+  .panel .label {
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 0.85rem;
+  }
+
+  .panel.bad .label { color: var(--warn); }
+  .panel.good .label { color: var(--good); }
+
+  .panel h3 {
+    font-family: Newsreader, serif;
+    font-size: 1.45rem;
+    font-weight: 600;
+    margin-bottom: 0.7rem;
+  }
+
+  .panel p {
+    color: var(--muted);
+    line-height: 1.55;
+    font-size: 0.98rem;
+  }
+
+  .arch {
+    display: grid;
+    gap: 0.85rem;
+    max-width: 42rem;
+    margin-top: 0.4rem;
+  }
+
+  .arch .hub {
+    background: var(--accent-soft);
+    border: 1px solid rgba(212, 160, 23, 0.45);
+    border-radius: 4px;
+    padding: 1.1rem 1.25rem;
+    font-weight: 600;
+    font-size: 1.05rem;
+  }
+
+  .arch .hub span {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--muted);
+    margin-top: 0.25rem;
+  }
+
+  .arch .arrow {
+    color: var(--accent);
+    font-size: 0.9rem;
+    letter-spacing: 0.08em;
+    padding-left: 0.2rem;
+  }
+
+  .arch .fleet {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.65rem;
+  }
+
+  .arch .fleet div {
+    border: 1px solid var(--line);
+    background: var(--plane);
+    border-radius: 3px;
+    padding: 0.85rem 0.9rem;
+    font-size: 0.92rem;
+    text-align: center;
+  }
+
+  .flow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    align-items: center;
+    margin-top: 1.2rem;
+    max-width: 48rem;
+  }
+
+  .flow .step {
+    background: var(--plane);
+    border: 1px solid var(--line);
+    padding: 0.7rem 1rem;
+    border-radius: 3px;
+    font-size: 0.95rem;
+    font-weight: 500;
+  }
+
+  .flow .step.accent {
+    border-color: rgba(212, 160, 23, 0.5);
+    background: var(--accent-soft);
+  }
+
+  .flow .sep {
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  .big-number {
+    font-family: Newsreader, serif;
+    font-size: clamp(3.5rem, 8vw, 6rem);
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 0.6rem;
+  }
+
+  .footer-note {
+    margin-top: 2rem;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  .footer-note a {
+    color: var(--ink);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  /* chrome */
+  .chrome {
+    position: fixed;
+    z-index: 5;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem clamp(1.2rem, 4vw, 2.5rem) 1.25rem;
+    pointer-events: none;
+  }
+
+  .chrome .progress {
+    display: flex;
+    gap: 0.35rem;
+    pointer-events: auto;
+  }
+
+  .chrome .progress button {
+    width: 1.6rem;
+    height: 3px;
+    border: 0;
+    background: rgba(242, 240, 233, 0.2);
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .chrome .progress button.on {
+    background: var(--accent);
+  }
+
+  .chrome .hint {
+    color: var(--muted);
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+  }
+
+  .brand {
+    position: fixed;
+    top: 1.25rem;
+    left: clamp(1.2rem, 4vw, 2.5rem);
+    z-index: 5;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .brand b { color: var(--ink); font-weight: 600; }
+</style>
+</head>
+<body>
+  <div class="brand"><b>Acme Finance</b> · vulnerability governance</div>
+
+  <div class="deck" id="deck">
+
+    <!-- 1 -->
+    <section class="slide active" data-title="表紙">
+      <p class="kicker reveal">Org-wide vulnerability governance</p>
+      <h1 class="reveal">セキュリティスキャンを、<br>各リポジトリに任せない。</h1>
+      <p class="lede reveal">
+        Org 内の<strong>特定の 1 プロジェクト</strong>がコントロールプレーンになり、
+        配下のリポジトリをまとめて検査・報告・（必要なら）修正 PR まで担う。
+      </p>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide" data-title="よくあるやり方">
+      <p class="kicker reveal">Before</p>
+      <h2 class="reveal">よくあるやり方の弱み</h2>
+      <ul class="points">
+        <li class="reveal">スキャンを<strong>各プロジェクトの CI</strong>に埋め込む</li>
+        <li class="reveal">チームごとに導入タイミングがずれ、<em>やり忘れ</em>が起きる</li>
+        <li class="reveal">新規リポジトリは「誰かが workflow を足すまで」見えない</li>
+        <li class="reveal">Org 全体の状態を一目で見る場所がない</li>
+      </ul>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide" data-title="対比">
+      <p class="kicker reveal">Contrast</p>
+      <h2 class="reveal">埋め込み CI と、中央統制</h2>
+      <div class="compare">
+        <div class="panel bad reveal">
+          <div class="label">分散 · 各リポジトリ CI</div>
+          <h3>任意参加</h3>
+          <p>workflow を置いたリポジトリだけが対象。置かない／壊れたままのリポジトリはサイレントに漏れる。</p>
+        </div>
+        <div class="panel good reveal">
+          <div class="label">集中 · コントロールプレーン</div>
+          <h3>強制カバレッジ</h3>
+          <p>Org 配下を毎回列挙して検査する。アプリ側にスキャナをコピーしない。増えたリポジトリも次の run から自動で入る。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide" data-title="要点">
+      <p class="kicker reveal">Point</p>
+      <h2 class="reveal">今回の方式のポイント</h2>
+      <ul class="points">
+        <li class="reveal">セキュリティスキャンは<strong>各プロジェクトの CI には組まない</strong></li>
+        <li class="reveal">Org 内の<strong>特定 1 プロジェクト</strong>から全体をスキャンする</li>
+        <li class="reveal">だから<em>強制力</em>があり、<em>やり忘れがない</em></li>
+        <li class="reveal">横断レポートは<strong>勝手に</strong>作られる（Issue + Pages）</li>
+        <li class="reveal">ポリシーを通った CRITICAL は、<strong>修正 PR も自動で開ける</strong></li>
+      </ul>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide" data-title="構成">
+      <p class="kicker reveal">Architecture</p>
+      <h2 class="reveal">1 つのコントロールプレーン</h2>
+      <div class="arch">
+        <div class="hub reveal">
+          cursor-governance-demo
+          <span>発見 · Trivy · ポリシー · Cloud Agent · レポート / Pages</span>
+        </div>
+        <div class="arrow reveal">↓ 毎晩（と手動）· 登録不要で列挙</div>
+        <div class="fleet reveal">
+          <div>Java / Maven</div>
+          <div>npm</div>
+          <div>Go</div>
+          <div>Gradle</div>
+          <div>Python</div>
+          <div>…新規も自動</div>
+        </div>
+      </div>
+      <p class="footer-note reveal">アプリ側にオーケストレータは置かない。スキャンの「置き場所」はここだけ。</p>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide" data-title="強制力">
+      <p class="kicker reveal">Enforcement</p>
+      <div class="big-number reveal">登録ゼロ</div>
+      <h2 class="reveal">やり忘れが構造的に起きない</h2>
+      <ul class="points">
+        <li class="reveal">対象は「リスト登録」ではなく、<strong>Org 所有者の持ち物を毎回数え直す</strong></li>
+        <li class="reveal">外す唯一の出口は exemptions（理由と見直し日つき）</li>
+        <li class="reveal">リポジトリが増えても、アプリチームが workflow を足す必要はない</li>
+      </ul>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide" data-title="流れ">
+      <p class="kicker reveal">Nightly flow</p>
+      <h2 class="reveal">毎晩の流れ</h2>
+      <div class="flow reveal">
+        <div class="step">発見</div><span class="sep">→</span>
+        <div class="step">並列スキャン<br><small style="color:var(--muted);font-weight:400">Trivy · 全件</small></div><span class="sep">→</span>
+        <div class="step">振り分け<br><small style="color:var(--muted);font-weight:400">CRITICAL のみ</small></div><span class="sep">→</span>
+        <div class="step accent">修正（任意）<br><small style="color:var(--muted);font-weight:400">Cloud Agent</small></div><span class="sep">→</span>
+        <div class="step accent">レポート</div>
+      </div>
+      <ul class="points" style="margin-top:1.8rem">
+        <li class="reveal">検査は Cursor 枠を使わないので、<strong>全リポジトリ並列</strong>で回せる</li>
+        <li class="reveal">Agent は「直すとき」だけ。トークンは直す回数に比例</li>
+      </ul>
+    </section>
+
+    <!-- 8 -->
+    <section class="slide" data-title="レポート">
+      <p class="kicker reveal">Reporting</p>
+      <h2 class="reveal">レポートは勝手にできる</h2>
+      <ul class="points">
+        <li class="reveal"><em>Issue</em> — 「今夜どうだったか」の横断サマリ（毎回起票）</li>
+        <li class="reveal"><em>GitHub Pages</em> — 「今どれだけ開いているか」の断面を毎 run で焼き直す</li>
+        <li class="reveal">ダッシュボード常駐は不要。artifact → snapshot → 静的 HTML</li>
+      </ul>
+      <p class="footer-note reveal">
+        例:
+        <a href="https://acme-finance-demo.github.io/cursor-governance-demo/" target="_blank" rel="noopener">acme-finance-demo.github.io/cursor-governance-demo</a>
+      </p>
+    </section>
+
+    <!-- 9 -->
+    <section class="slide" data-title="修正PR">
+      <p class="kicker reveal">Remediation</p>
+      <h2 class="reveal">場合によっては PR も作る</h2>
+      <ul class="points">
+        <li class="reveal">自動修正は<strong>ポリシーがコードで決める</strong>（エージェントの裁量ではない）</li>
+        <li class="reveal">既定: CRITICAL かつマイナー／パッチ上げのみ。メジャー上げは人手</li>
+        <li class="reveal">1 パッケージグループ = 1 PR。予算と「既に open」の二重提出防止つき</li>
+        <li class="reveal">スキャンだけ・修正あり、は手動実行のフラグで切り替え可能</li>
+      </ul>
+    </section>
+
+    <!-- 10 -->
+    <section class="slide" data-title="まとめ">
+      <p class="kicker reveal">Takeaway</p>
+      <h2 class="reveal">覚えること、3 つ</h2>
+      <ul class="points">
+        <li class="reveal"><em>1.</em> スキャンの置き場所は Org 内の<strong>1 プロジェクト</strong>（各 CI ではない）</li>
+        <li class="reveal"><em>2.</em> 列挙ベースなので<strong>強制</strong>され、<strong>やり忘れない</strong></li>
+        <li class="reveal"><em>3.</em> レポートは自動。修正 PR はポリシーが通ったときだけ</li>
+      </ul>
+      <p class="footer-note reveal">シフトレフトが欲しければ、同じコントロールプレーンを reusable workflow で呼ぶ道もある — コピーはしない。</p>
+    </section>
+
+  </div>
+
+  <div class="chrome">
+    <div class="progress" id="dots" aria-label="slides"></div>
+    <div class="hint">← → またはスペース · クリックで次へ</div>
+  </div>
+
+<script>
+(() => {
+  const slides = [...document.querySelectorAll(".slide")];
+  const dots = document.getElementById("dots");
+  let i = 0;
+
+  slides.forEach((_, idx) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.setAttribute("aria-label", `Slide ${idx + 1}`);
+    b.addEventListener("click", (e) => { e.stopPropagation(); go(idx); });
+    dots.appendChild(b);
+  });
+
+  function go(n) {
+    i = (n + slides.length) % slides.length;
+    slides.forEach((s, idx) => s.classList.toggle("active", idx === i));
+    [...dots.children].forEach((d, idx) => d.classList.toggle("on", idx === i));
+    history.replaceState(null, "", `#${i + 1}`);
+  }
+
+  function next() { go(i + 1); }
+  function prev() { go(i - 1); }
+
+  document.addEventListener("keydown", (e) => {
+    if (["ArrowRight", "PageDown", " ", "Enter"].includes(e.key)) {
+      e.preventDefault();
+      next();
+    } else if (["ArrowLeft", "PageUp", "Backspace"].includes(e.key)) {
+      e.preventDefault();
+      prev();
+    } else if (e.key === "Home") {
+      go(0);
+    } else if (e.key === "End") {
+      go(slides.length - 1);
+    }
+  });
+
+  document.querySelector(".deck").addEventListener("click", (e) => {
+    if (e.target.closest("a, button")) return;
+    next();
+  });
+
+  const fromHash = parseInt((location.hash || "#1").slice(1), 10);
+  go(Number.isFinite(fromHash) && fromHash >= 1 ? fromHash - 1 : 0);
+})();
+</script>
+</body>
+</html>
