@@ -657,13 +657,14 @@
       <p class="kicker reveal">Nightly flow</p>
       <h2 class="reveal"><span class="line">毎晩の流れ</span></h2>
       <div class="flow reveal">
-        <div class="step">発見</div><span class="sep">→</span>
+        <div class="step">発見<small>Org Token</small></div><span class="sep">→</span>
         <div class="step">並列スキャン<small>Trivy · 全件</small></div><span class="sep">→</span>
         <div class="step">振り分け<small>CRITICAL のみ</small></div><span class="sep">→</span>
-        <div class="step accent">修正（任意）<small>Cloud Agent</small></div><span class="sep">→</span>
+        <div class="step accent">修正（任意）<small>Cursor Agent</small></div><span class="sep">→</span>
         <div class="step accent">レポート</div>
       </div>
       <ul class="points" style="margin-top:1.4rem">
+        <li class="reveal"><strong>発見</strong>は Organization Token で動く。<strong>全リポジトリ（新規含む）を毎晩自動で列挙</strong>する</li>
         <li class="reveal">検査は Cursor 枠を使わないので、<strong>全リポジトリ並列</strong>で回せる</li>
         <li class="reveal">Agent は「直すとき」だけ。トークンは直す回数に比例</li>
       </ul>
