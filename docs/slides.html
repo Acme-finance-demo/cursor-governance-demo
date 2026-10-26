@@ -424,151 +424,21 @@
 
   .brand b { color: var(--ink); font-weight: 600; }
 
-  /* sequence diagram */
+  /* sequence diagram (SVG) */
   .seq {
     margin-top: 0.25rem;
     max-width: 52rem;
     border: 1px solid var(--line);
     border-radius: 6px;
     background: rgba(26, 38, 33, 0.45);
-    padding: 0.85rem 0.75rem 1rem;
-    overflow: hidden;
+    padding: 0.7rem 0.6rem 0.55rem;
   }
 
-  .seq-actors {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 0.4rem;
-    margin-bottom: 0.35rem;
-  }
-
-  .seq-actor {
-    text-align: center;
-    font-size: 0.72rem;
-    font-weight: 600;
-    line-height: 1.3;
-    padding: 0.45rem 0.3rem;
-    border: 1px solid var(--line);
-    border-radius: 3px;
-    background: var(--plane);
-    color: var(--ink);
-  }
-
-  .seq-actor.home {
-    border-color: rgba(212, 160, 23, 0.55);
-    background: var(--accent-soft);
-  }
-
-  .seq-actor small {
+  .seq svg {
     display: block;
-    font-weight: 500;
-    color: var(--muted);
-    font-size: 0.62rem;
-    margin-top: 0.15rem;
+    width: 100%;
+    height: auto;
   }
-
-  .seq-body {
-    position: relative;
-    display: grid;
-    gap: 0.15rem;
-    padding-top: 0.35rem;
-  }
-
-  .seq-body::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    /* lifelines under the 4 actors */
-    background: linear-gradient(90deg,
-      transparent calc(12.5% - 0.5px), rgba(242,240,233,0.14) calc(12.5% - 0.5px), rgba(242,240,233,0.14) calc(12.5% + 0.5px), transparent calc(12.5% + 0.5px),
-      transparent calc(37.5% - 0.5px), rgba(242,240,233,0.14) calc(37.5% - 0.5px), rgba(242,240,233,0.14) calc(37.5% + 0.5px), transparent calc(37.5% + 0.5px),
-      transparent calc(62.5% - 0.5px), rgba(242,240,233,0.14) calc(62.5% - 0.5px), rgba(242,240,233,0.14) calc(62.5% + 0.5px), transparent calc(62.5% + 0.5px),
-      transparent calc(87.5% - 0.5px), rgba(242,240,233,0.14) calc(87.5% - 0.5px), rgba(242,240,233,0.14) calc(87.5% + 0.5px), transparent calc(87.5% + 0.5px)
-    );
-    pointer-events: none;
-  }
-
-  .seq-row {
-    position: relative;
-    z-index: 1;
-    min-height: 1.9rem;
-  }
-
-  .seq-row .n {
-    position: absolute;
-    left: 0;
-    top: 0.35rem;
-    width: 1.1rem;
-    font-size: 0.62rem;
-    color: var(--accent);
-    font-weight: 700;
-    text-align: center;
-    z-index: 2;
-  }
-
-  .seq-msg {
-    position: relative;
-    height: 1.9rem;
-  }
-
-  .seq-msg .wire {
-    position: absolute;
-    top: 58%;
-    height: 1px;
-    background: rgba(242, 240, 233, 0.45);
-  }
-
-  .seq-msg .wire::after {
-    content: "";
-    position: absolute;
-    right: -1px;
-    top: -3px;
-    border: 4px solid transparent;
-    border-left: 6px solid rgba(242, 240, 233, 0.7);
-  }
-
-  .seq-msg.back .wire {
-    background: rgba(212, 160, 23, 0.55);
-  }
-
-  .seq-msg.back .wire::after {
-    border-left-color: rgba(212, 160, 23, 0.85);
-  }
-
-  .seq-msg .label {
-    position: absolute;
-    top: 0.08rem;
-    font-size: 0.68rem;
-    color: var(--ink);
-    white-space: nowrap;
-    background: rgba(14, 20, 18, 0.85);
-    padding: 0 0.28rem;
-    line-height: 1.2;
-  }
-
-  /* lanes centered at 12.5 / 37.5 / 62.5 / 87.5% of seq width */
-  .seq-msg.f0t1 .wire { left: 12.5%; width: 25%; }
-  .seq-msg.f0t1 .label { left: 16%; }
-  .seq-msg.f0t2 .wire { left: 12.5%; width: 50%; }
-  .seq-msg.f0t2 .label { left: 26%; }
-  .seq-msg.f2t0 .wire { left: 12.5%; width: 50%; }
-  .seq-msg.f2t0 .label { left: 26%; }
-  .seq-msg.f2t0 .wire::after {
-    left: -1px; right: auto;
-    border-left: 0;
-    border-right: 6px solid rgba(212, 160, 23, 0.85);
-  }
-  .seq-msg.f0t3 .wire { left: 12.5%; width: 75%; }
-  .seq-msg.f0t3 .label { left: 30%; }
-  .seq-msg.f3t0 .wire { left: 12.5%; width: 75%; }
-  .seq-msg.f3t0 .label { left: 30%; }
-  .seq-msg.f3t0 .wire::after {
-    left: -1px; right: auto;
-    border-left: 0;
-    border-right: 6px solid rgba(212, 160, 23, 0.85);
-  }
-  .seq-msg.f0t1b .wire { left: 12.5%; width: 25%; }
-  .seq-msg.f0t1b .label { left: 15%; }
 
   .seq-note {
     margin-top: 0.7rem;
@@ -576,11 +446,6 @@
     color: var(--muted);
     max-width: 48rem;
     line-height: 1.45;
-  }
-
-  @media (max-width: 800px) {
-    .seq-actor { font-size: 0.62rem; }
-    .seq-msg .label { font-size: 0.58rem; }
   }
 </style>
 </head>
@@ -692,56 +557,83 @@
         <span class="line">ほかのプロジェクトを検査する流れ</span>
       </h2>
       <div class="seq reveal">
-        <div class="seq-actors">
-          <div class="seq-actor home">Actions<small>cursor-governance-demo</small></div>
-          <div class="seq-actor">App repos<small>Org 配下の各プロジェクト</small></div>
-          <div class="seq-actor">Trivy<small>脆弱性スキャン</small></div>
-          <div class="seq-actor">Policy / Agent<small>判定と修正 PR</small></div>
-        </div>
-        <div class="seq-body">
-          <div class="seq-row">
-            <div class="n">1</div>
-            <div class="seq-msg f0t1">
-              <span class="wire"></span>
-              <span class="label">対象を発見し、リポジトリを clone</span>
-            </div>
-          </div>
-          <div class="seq-row">
-            <div class="n">2</div>
-            <div class="seq-msg f0t2">
-              <span class="wire"></span>
-              <span class="label">Trivy で依存関係をスキャン（全件・並列）</span>
-            </div>
-          </div>
-          <div class="seq-row">
-            <div class="n">3</div>
-            <div class="seq-msg f2t0 back">
-              <span class="wire"></span>
-              <span class="label">検出結果（CRITICAL / HIGH / MEDIUM）</span>
-            </div>
-          </div>
-          <div class="seq-row">
-            <div class="n">4</div>
-            <div class="seq-msg f0t3">
-              <span class="wire"></span>
-              <span class="label">CRITICAL をトリアージ → ポリシーで自動修正可否を判定</span>
-            </div>
-          </div>
-          <div class="seq-row">
-            <div class="n">5</div>
-            <div class="seq-msg f3t0 back">
-              <span class="wire"></span>
-              <span class="label">通ったものだけ Cloud Agent が修正 PR を作成</span>
-            </div>
-          </div>
-          <div class="seq-row">
-            <div class="n">6</div>
-            <div class="seq-msg f0t1b">
-              <span class="wire"></span>
-              <span class="label">アプリ側へ PR（影響分析つき）／ Issue・Pages に横断レポート</span>
-            </div>
-          </div>
-        </div>
+        <!--
+          4 lanes at x = 110, 310, 510, 710
+          actor boxes centered on those x
+          arrows go lane-to-lane exactly
+        -->
+        <svg viewBox="0 0 820 340" role="img" aria-label="Actions が他リポジトリをスキャンし PR を作るシーケンス">
+          <!-- lanes: Actions=110, Apps=310, Trivy=510, Policy=710 -->
+
+          <!-- lifelines -->
+          <line x1="110" y1="56" x2="110" y2="332" stroke="rgba(242,240,233,0.2)" stroke-width="1.25"/>
+          <line x1="310" y1="56" x2="310" y2="332" stroke="rgba(242,240,233,0.2)" stroke-width="1.25"/>
+          <line x1="510" y1="56" x2="510" y2="332" stroke="rgba(242,240,233,0.2)" stroke-width="1.25"/>
+          <line x1="710" y1="56" x2="710" y2="332" stroke="rgba(242,240,233,0.2)" stroke-width="1.25"/>
+
+          <!-- actors -->
+          <g font-family="IBM Plex Sans JP, sans-serif" text-anchor="middle">
+            <rect x="30" y="8" width="160" height="44" rx="3" fill="rgba(212,160,23,0.16)" stroke="rgba(212,160,23,0.55)"/>
+            <text x="110" y="26" fill="#f2f0e9" font-size="12" font-weight="600">Actions</text>
+            <text x="110" y="42" fill="#9aa89f" font-size="10">cursor-governance-demo</text>
+
+            <rect x="230" y="8" width="160" height="44" rx="3" fill="#1a2621" stroke="rgba(242,240,233,0.12)"/>
+            <text x="310" y="26" fill="#f2f0e9" font-size="12" font-weight="600">App repos</text>
+            <text x="310" y="42" fill="#9aa89f" font-size="10">Org 配下の各プロジェクト</text>
+
+            <rect x="430" y="8" width="160" height="44" rx="3" fill="#1a2621" stroke="rgba(242,240,233,0.12)"/>
+            <text x="510" y="26" fill="#f2f0e9" font-size="12" font-weight="600">Trivy</text>
+            <text x="510" y="42" fill="#9aa89f" font-size="10">脆弱性スキャン</text>
+
+            <rect x="630" y="8" width="160" height="44" rx="3" fill="#1a2621" stroke="rgba(242,240,233,0.12)"/>
+            <text x="710" y="26" fill="#f2f0e9" font-size="12" font-weight="600">Policy / Agent</text>
+            <text x="710" y="42" fill="#9aa89f" font-size="10">判定と修正 PR</text>
+          </g>
+
+          <!--
+            arrows: line stops 10px before dest so the triangle tip sits on the lifeline
+            forward tip: (x,y-5) (x+10,y) (x,y+5)
+            back tip:    (x,y-5) (x-10,y) (x,y+5)
+          -->
+          <g font-family="IBM Plex Sans JP, sans-serif" font-size="11">
+            <!-- 1 Actions → Apps -->
+            <text x="18" y="88" fill="#d4a017" font-size="11" font-weight="700">1</text>
+            <line x1="110" y1="92" x2="300" y2="92" stroke="rgba(242,240,233,0.75)" stroke-width="1.5"/>
+            <polygon points="310,92 300,87 300,97" fill="rgba(242,240,233,0.9)"/>
+            <text x="210" y="84" text-anchor="middle" fill="#f2f0e9">対象を発見し、リポジトリを clone</text>
+
+            <!-- 2 Actions → Trivy -->
+            <text x="18" y="128" fill="#d4a017" font-size="11" font-weight="700">2</text>
+            <line x1="110" y1="132" x2="500" y2="132" stroke="rgba(242,240,233,0.75)" stroke-width="1.5"/>
+            <polygon points="510,132 500,127 500,137" fill="rgba(242,240,233,0.9)"/>
+            <text x="310" y="124" text-anchor="middle" fill="#f2f0e9">Trivy で依存関係をスキャン（全件・並列）</text>
+
+            <!-- 3 Trivy → Actions -->
+            <text x="18" y="168" fill="#d4a017" font-size="11" font-weight="700">3</text>
+            <line x1="510" y1="172" x2="120" y2="172" stroke="rgba(212,160,23,0.95)" stroke-width="1.5"/>
+            <polygon points="110,172 120,167 120,177" fill="rgba(212,160,23,0.95)"/>
+            <text x="310" y="164" text-anchor="middle" fill="#f2f0e9">検出結果（CRITICAL / HIGH / MEDIUM）</text>
+
+            <!-- 4 Actions → Policy -->
+            <text x="18" y="208" fill="#d4a017" font-size="11" font-weight="700">4</text>
+            <line x1="110" y1="212" x2="700" y2="212" stroke="rgba(242,240,233,0.75)" stroke-width="1.5"/>
+            <polygon points="710,212 700,207 700,217" fill="rgba(242,240,233,0.9)"/>
+            <text x="410" y="204" text-anchor="middle" fill="#f2f0e9">CRITICAL をトリアージ → ポリシーで自動修正可否を判定</text>
+
+            <!-- 5 Policy → Actions -->
+            <text x="18" y="248" fill="#d4a017" font-size="11" font-weight="700">5</text>
+            <line x1="710" y1="252" x2="120" y2="252" stroke="rgba(212,160,23,0.95)" stroke-width="1.5"/>
+            <polygon points="110,252 120,247 120,257" fill="rgba(212,160,23,0.95)"/>
+            <text x="410" y="244" text-anchor="middle" fill="#f2f0e9">通ったものだけ Cloud Agent が修正 PR を作成</text>
+
+            <!-- 6 Actions → Apps -->
+            <text x="18" y="288" fill="#d4a017" font-size="11" font-weight="700">6</text>
+            <line x1="110" y1="292" x2="300" y2="292" stroke="rgba(242,240,233,0.75)" stroke-width="1.5"/>
+            <polygon points="310,292 300,287 300,297" fill="rgba(242,240,233,0.9)"/>
+            <text x="210" y="284" text-anchor="middle" fill="#f2f0e9">アプリ側へ PR（影響分析つき）</text>
+            <text x="210" y="316" text-anchor="middle" fill="#9aa89f" font-size="10">あわせて Issue・Pages に横断レポート</text>
+          </g>
+        </svg>
       </div>
       <p class="seq-note reveal">
         スキャナもポリシーも Actions の置き場所は governance-demo だけ。アプリ側の CI には載せない。
