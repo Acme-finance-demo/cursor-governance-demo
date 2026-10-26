@@ -423,6 +423,163 @@
   }
 
   .brand b { color: var(--ink); font-weight: 600; }
+
+  /* sequence diagram */
+  .seq {
+    margin-top: 0.25rem;
+    max-width: 52rem;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: rgba(26, 38, 33, 0.45);
+    padding: 0.85rem 0.75rem 1rem;
+    overflow: hidden;
+  }
+
+  .seq-actors {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.4rem;
+    margin-bottom: 0.35rem;
+  }
+
+  .seq-actor {
+    text-align: center;
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1.3;
+    padding: 0.45rem 0.3rem;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    background: var(--plane);
+    color: var(--ink);
+  }
+
+  .seq-actor.home {
+    border-color: rgba(212, 160, 23, 0.55);
+    background: var(--accent-soft);
+  }
+
+  .seq-actor small {
+    display: block;
+    font-weight: 500;
+    color: var(--muted);
+    font-size: 0.62rem;
+    margin-top: 0.15rem;
+  }
+
+  .seq-body {
+    position: relative;
+    display: grid;
+    gap: 0.15rem;
+    padding-top: 0.35rem;
+  }
+
+  .seq-body::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    /* lifelines under the 4 actors */
+    background: linear-gradient(90deg,
+      transparent calc(12.5% - 0.5px), rgba(242,240,233,0.14) calc(12.5% - 0.5px), rgba(242,240,233,0.14) calc(12.5% + 0.5px), transparent calc(12.5% + 0.5px),
+      transparent calc(37.5% - 0.5px), rgba(242,240,233,0.14) calc(37.5% - 0.5px), rgba(242,240,233,0.14) calc(37.5% + 0.5px), transparent calc(37.5% + 0.5px),
+      transparent calc(62.5% - 0.5px), rgba(242,240,233,0.14) calc(62.5% - 0.5px), rgba(242,240,233,0.14) calc(62.5% + 0.5px), transparent calc(62.5% + 0.5px),
+      transparent calc(87.5% - 0.5px), rgba(242,240,233,0.14) calc(87.5% - 0.5px), rgba(242,240,233,0.14) calc(87.5% + 0.5px), transparent calc(87.5% + 0.5px)
+    );
+    pointer-events: none;
+  }
+
+  .seq-row {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 12.5% 1fr;
+    align-items: center;
+    min-height: 1.85rem;
+  }
+
+  .seq-row .n {
+    font-size: 0.65rem;
+    color: var(--accent);
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .seq-msg {
+    position: relative;
+    height: 1.85rem;
+  }
+
+  .seq-msg .wire {
+    position: absolute;
+    top: 55%;
+    height: 1px;
+    background: rgba(242, 240, 233, 0.45);
+  }
+
+  .seq-msg .wire::after {
+    content: "";
+    position: absolute;
+    right: -1px;
+    top: -3px;
+    border: 4px solid transparent;
+    border-left: 6px solid rgba(242, 240, 233, 0.7);
+  }
+
+  .seq-msg.back .wire {
+    background: rgba(212, 160, 23, 0.55);
+  }
+
+  .seq-msg.back .wire::after {
+    border-left-color: rgba(212, 160, 23, 0.85);
+  }
+
+  .seq-msg .label {
+    position: absolute;
+    top: 0.05rem;
+    font-size: 0.68rem;
+    color: var(--ink);
+    white-space: nowrap;
+    background: rgba(14, 20, 18, 0.82);
+    padding: 0 0.25rem;
+    line-height: 1.2;
+  }
+
+  /* from-to as % of the 4-lane area (0=Actions,1=Apps,2=Trivy,3=Policy/GitHub) */
+  .seq-msg.f0t1 .wire { left: 12.5%; width: 25%; }
+  .seq-msg.f0t1 .label { left: 18%; }
+  .seq-msg.f0t2 .wire { left: 12.5%; width: 50%; }
+  .seq-msg.f0t2 .label { left: 28%; }
+  .seq-msg.f2t0 .wire { left: 12.5%; width: 50%; }
+  .seq-msg.f2t0 .label { left: 28%; }
+  .seq-msg.f2t0 .wire::after {
+    left: -1px; right: auto;
+    border-left: 0;
+    border-right: 6px solid rgba(212, 160, 23, 0.85);
+  }
+  .seq-msg.f0t3 .wire { left: 12.5%; width: 75%; }
+  .seq-msg.f0t3 .label { left: 38%; }
+  .seq-msg.f3t0 .wire { left: 12.5%; width: 75%; }
+  .seq-msg.f3t0 .label { left: 38%; }
+  .seq-msg.f3t0 .wire::after {
+    left: -1px; right: auto;
+    border-left: 0;
+    border-right: 6px solid rgba(212, 160, 23, 0.85);
+  }
+  .seq-msg.f0t1b .wire { left: 12.5%; width: 25%; }
+  .seq-msg.f0t1b .label { left: 16%; }
+
+  .seq-note {
+    margin-top: 0.7rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+    max-width: 48rem;
+    line-height: 1.45;
+  }
+
+  @media (max-width: 800px) {
+    .seq-actor { font-size: 0.62rem; }
+    .seq-msg .label { font-size: 0.58rem; }
+  }
 </style>
 </head>
 <body>
@@ -525,7 +682,71 @@
       </p>
     </section>
 
-    <!-- 6 -->
+    <!-- 6：シーケンス -->
+    <section class="slide" data-title="シーケンス">
+      <p class="kicker reveal">Sequence · GitHub Actions</p>
+      <h2 class="reveal">
+        <span class="line">governance-demo の Actions が</span>
+        <span class="line">ほかのプロジェクトを検査する流れ</span>
+      </h2>
+      <div class="seq reveal">
+        <div class="seq-actors">
+          <div class="seq-actor home">Actions<small>cursor-governance-demo</small></div>
+          <div class="seq-actor">App repos<small>Org 配下の各プロジェクト</small></div>
+          <div class="seq-actor">Trivy<small>脆弱性スキャン</small></div>
+          <div class="seq-actor">Policy / Agent<small>判定と修正 PR</small></div>
+        </div>
+        <div class="seq-body">
+          <div class="seq-row">
+            <div class="n">1</div>
+            <div class="seq-msg f0t1">
+              <span class="wire"></span>
+              <span class="label">対象を発見し、リポジトリを clone</span>
+            </div>
+          </div>
+          <div class="seq-row">
+            <div class="n">2</div>
+            <div class="seq-msg f0t2">
+              <span class="wire"></span>
+              <span class="label">Trivy で依存関係をスキャン（全件・並列）</span>
+            </div>
+          </div>
+          <div class="seq-row">
+            <div class="n">3</div>
+            <div class="seq-msg f2t0 back">
+              <span class="wire"></span>
+              <span class="label">検出結果（CRITICAL / HIGH / MEDIUM）</span>
+            </div>
+          </div>
+          <div class="seq-row">
+            <div class="n">4</div>
+            <div class="seq-msg f0t3">
+              <span class="wire"></span>
+              <span class="label">CRITICAL をトリアージ → ポリシーで自動修正可否を判定</span>
+            </div>
+          </div>
+          <div class="seq-row">
+            <div class="n">5</div>
+            <div class="seq-msg f3t0 back">
+              <span class="wire"></span>
+              <span class="label">通ったものだけ Cloud Agent が修正 PR を作成</span>
+            </div>
+          </div>
+          <div class="seq-row">
+            <div class="n">6</div>
+            <div class="seq-msg f0t1b">
+              <span class="wire"></span>
+              <span class="label">アプリ側へ PR（影響分析つき）／ Issue・Pages に横断レポート</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="seq-note reveal">
+        スキャナもポリシーも Actions の置き場所は governance-demo だけ。アプリ側の CI には載せない。
+      </p>
+    </section>
+
+    <!-- 7 -->
     <section class="slide" data-title="強制力">
       <p class="kicker reveal">Enforcement</p>
       <div class="big-number reveal">登録ゼロ</div>
