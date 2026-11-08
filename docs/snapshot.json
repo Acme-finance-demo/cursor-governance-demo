@@ -1,10 +1,10 @@
 {
  "owner": "Acme-finance-demo",
- "generatedAt": "2026-11-07T21:44:03+00:00",
- "scannedAt": "2026-11-07T21:41:18.939417125Z",
+ "generatedAt": "2026-11-08T21:57:31+00:00",
+ "scannedAt": "2026-11-08T21:54:45.863233969Z",
  "scanner": "Trivy 0.74.0",
- "runId": "42417010794",
- "runUrl": "https://github.com/Acme-finance-demo/cursor-governance-demo/actions/runs/42417010794",
+ "runId": "42527511839",
+ "runUrl": "https://github.com/Acme-finance-demo/cursor-governance-demo/actions/runs/42527511839",
  "repos": [
   {
    "slug": "Acme-finance-demo/auth-service",
@@ -131,7 +131,7 @@
      ],
      "isDirectDependency": false,
      "isMajorBump": false,
-     "notes": "Transitive via spring-boot-starter-logging → logback-classic. Boot 3.5.15 already manages logback 1.5.34, so a parent/plugin bump alone clears this; alternatively ext['logback.version'] / <logback.version> matches existing tomcat/thymeleaf override style. CVE requires Janino plus writable log config or env injection—low relevance for default Petclinic."
+     "notes": "Transitive via `spring-boot-starter-logging` / Logback. Fix with `ext['logback.version']` (Gradle) or `<logback.version>` (Maven), matching existing Tomcat/Thymeleaf override pattern, or via a newer Spring Boot BOM."
     },
     {
      "action": "comment_only",
@@ -150,7 +150,7 @@
      ],
      "isDirectDependency": false,
      "isMajorBump": false,
-     "notes": "Transitive via spring-boot-starter-json → jackson-databind. Highest fix across findings is 2.22.3 (2.21.7 also appears). Boot 3.5.15 raises to 2.21.4, which is still short of 2.21.7/2.22.3; set ext['jackson-bom.version'] or <jackson-bom.version> and keep jackson-databind aligned. Async-parser DoS chiefly affects WebFlux/non-blocking parsers; Petclinic uses servlet MVC only, which limits but does not eliminate exposure on other paths (regex/DataInput DoS)."
+     "notes": "Managed by the Spring Boot BOM (starters, JPA, Actuator). Highest 2.x fix across solutions is 2.22.3; override `jackson-bom.version` if a Boot patch lags. Async-parser DoS mainly affects reactive parsers; Petclinic is servlet MVC."
     },
     {
      "action": "comment_only",
@@ -177,7 +177,7 @@
      ],
      "isDirectDependency": false,
      "isMajorBump": false,
-     "notes": "Same BOM-managed JSON stack as jackson-core; bump jackson-bom together. Several CVEs need polymorphic typing, @JsonTypeInfo, identity collections, or binding Path/Duration from untrusted JSON—Petclinic uses typical REST/JPA DTOs without those patterns, but defaults still deserialize user JSON on controllers."
+     "notes": "Same BOM management as jackson-core; align databind/core/annotations via `jackson-bom.version`. Solutions also mention 3.1.x/3.2.x (major). PTV/array-bypass CVEs matter only if polymorphic typing or custom PTV is enabled; Petclinic uses standard MVC JSON/JPA binding."
     },
     {
      "action": "comment_only",
@@ -194,7 +194,7 @@
      ],
      "isDirectDependency": false,
      "isMajorBump": false,
-     "notes": "Transitive through spring-boot-starter-actuator → micrometer-jakarta9. Fixed by Boot 3.5.15 (micrometer 1.15.12 on the 1.15 line). DoS via crafted HTTP/gRPC only matters when actuator or instrumented endpoints are exposed."
+     "notes": "Transitive through `spring-boot-starter-actuator`. Prefer 1.15.12 on the current 1.15 line (solutions also list 1.16.6). Resolved by bumping Spring Boot BOM; optional `micrometer.version` override if needed."
     },
     {
      "action": "comment_only",
@@ -210,7 +210,7 @@
      ],
      "isDirectDependency": false,
      "isMajorBump": false,
-     "notes": "Transitive via spring-boot-starter-logging → log4j-to-slf4j; runtime logging is Logback, not Log4j2 layouts. Boot 3.5.15 still pins log4j2 2.24.3—override ext['log4j2.version'] / <log4j2.version> to 2.26.1. Impact is malformed JSON in MapMessage JsonTemplateLayout paths, unlikely in default Petclinic."
+     "notes": "Transitive bridge API in Spring Boot logging (Log4j-over-SLF4J). Highest solution version is 2.26.1. Impact limited to MapMessage JSON layouts; default Logback/SLF4J setup is unlikely exposed."
     },
     {
      "action": "comment_only",
@@ -228,7 +228,7 @@
      ],
      "isDirectDependency": true,
      "isMajorBump": false,
-     "notes": "Declared runtimeOnly in build.gradle and runtime in pom.xml without a version (BOM-managed). Boot 3.5.15 only reaches 42.7.11; 42.7.12 needs ext['postgresql.version'] / <postgresql.version> override. Relevant when postgres profile is used; channel-binding fixes matter for MITM-hardened deployments."
+     "notes": "Declared directly in both `build.gradle` and `pom.xml` without a version (BOM-managed). Set `postgresql.version` in properties/`ext` (same override style as Tomcat) or upgrade Boot BOM; 42.7.12 clears all three CVEs."
     },
     {
      "action": "comment_only",
@@ -244,7 +244,7 @@
      ],
      "isDirectDependency": false,
      "isMajorBump": false,
-     "notes": "Pulled by every starter; version comes from plugin/parent 3.5.0. Bump plugin version in build.gradle and parent in pom.xml (same pattern as current 3.5.0 pin). CVE needs server.servlet.session.persistent=true and local attacker—niche for Petclinic."
+     "notes": "Not declared; pulled by every starter. Bump Gradle plugin and Maven parent to 3.5.15+ (solutions also list 4.0.6). CVE needs `server.servlet.session.persistent=true`; Petclinic typically uses default non-persistent sessions—still upgrade for defense in depth."
     },
     {
      "action": "comment_only",
@@ -260,7 +260,7 @@
      ],
      "isDirectDependency": false,
      "isMajorBump": false,
-     "notes": "Transitive via all Boot starters. Advisory fix is 3.5.15. Embedded Artemis default data path is not used here (JPA/H2/MySQL/Postgres only)."
+     "notes": "Transitive from all starters. Fixed in 3.5.15 per solution (4.0.7 on 4.x). Affects embedded Artemis default data path; Petclinic does not use embedded Artemis."
     },
     {
      "action": "comment_only",
@@ -277,7 +277,7 @@
      ],
      "isDirectDependency": true,
      "isMajorBump": false,
-     "notes": "Direct runtimeOnly (Gradle) / compile (Maven) dependency. Actuator auth-bypass CVEs are fixed from 3.5.12 onward; 3.5.15 covers them and co-updates the actuator stack. Risk depends on health group / Cloud Foundry actuator path configuration."
+     "notes": "Direct runtime dependency (Gradle `runtimeOnly`, Maven compile). Actuator auth-bypass fixes at 3.5.12; raising the whole Boot coordinate to 3.5.15 also covers newer autoconfigure/boot CVEs. Review custom health-group / Cloud Foundry actuator path config if present."
     },
     {
      "action": "comment_only",
@@ -296,7 +296,7 @@
      ],
      "isDirectDependency": false,
      "isMajorBump": false,
-     "notes": "Transitive via spring-boot-starter-data-jpa. Boot 3.5.15 includes 3.5.12+ commons. DoS via Sort parameters or property paths affects apps exposing attacker-controlled sort/path strings (@ProjectedPayload not found in this repo)."
+     "notes": "Transitive via `spring-boot-starter-data-jpa`. Fixed at 3.5.12 (solutions also cite 4.0.6). DoS via property paths, sort parsing, and `@ProjectedPayload`—latter only if Spring Data Web projections are enabled."
     },
     {
      "action": "comment_only",
@@ -312,7 +312,7 @@
      ],
      "isDirectDependency": false,
      "isMajorBump": false,
-     "notes": "BOM-managed through all Spring modules. Boot 3.5.15 pins spring-framework 6.2.19, which satisfies 6.2.11. Issue applies to @EnableMethodSecurity on generic supertypes—not used in Petclinic sources."
+     "notes": "Transitive from Spring Framework BOM. Relevant if `@EnableMethodSecurity` and annotations on generic type hierarchies; verify method-security usage after `spring-framework.version` or Boot BOM bump."
     },
     {
      "action": "comment_only",
@@ -329,7 +329,7 @@
      ],
      "isDirectDependency": false,
      "isMajorBump": false,
-     "notes": "Transitive via spring-webmvc. Fixed with spring-framework 6.2.19 from Boot 3.5.15. Requires evaluating attacker-supplied SpEL; Petclinic does not expose SpEL endpoints."
+     "notes": "Transitive. SpEL DoS when evaluating attacker-controlled expressions; Petclinic does not expose user SpEL by default."
     },
     {
      "action": "comment_only",
@@ -346,16 +346,16 @@
      ],
      "isDirectDependency": false,
      "isMajorBump": false,
-     "notes": "Transitive via spring-boot-starter-web. Boot 3.5.15 → Framework 6.2.19 meets both fixes. RFD needs ContentDisposition.Builder#filename with non-ASCII charset from user input; SSRF needs UriComponentsBuilder on untrusted URLs—review any download helpers before dismissing."
+     "notes": "Transitive via `spring-boot-starter-web`. RFD/CVE-2025-41234 needs `ContentDisposition.filename(..., Charset)` with user input; SSRF via `UriComponentsBuilder` only if app parses untrusted URLs that way."
     },
     {
-     "action": "comment_only",
-     "reason": "no safe version bump is available",
-     "outcome": "",
-     "prUrl": "",
+     "action": "auto_remediate",
+     "reason": "CRITICAL patch/minor bump 6.2.7 → 6.2.20",
+     "outcome": "already_open",
+     "prUrl": "https://github.com/Acme-finance-demo/spring-petclinic-cursor/pull/8",
      "package": "org.springframework:spring-webmvc",
      "currentVersion": "6.2.7",
-     "recommendedVersion": "7.0.9",
+     "recommendedVersion": "6.2.20",
      "severity": "CRITICAL",
      "cves": [
       "CVE-2026-47884",
@@ -372,8 +372,8 @@
       "CVE-2026-41853"
      ],
      "isDirectDependency": false,
-     "isMajorBump": true,
-     "notes": "Transitive via spring-boot-starter-web. Non-critical findings fixed at 6.2.10–6.2.19 (Boot 3.5.15 → 6.2.19). CVE-2026-47884 and CVE-2026-47890 list only 7.0.9, which is Spring Framework 7 and effectively Spring Boot 4—not achievable on Boot 3.5 without a major migration. XsltView RCE and SSE view-fragment issues need /** mappings without explicit view names; Thymeleaf MVC Petclinic likely low exposure but scanner severity stays CRITICAL until Framework 7."
+     "isMajorBump": false,
+     "notes": "Transitive via `spring-boot-starter-web`. Scanner solutions list 7.0.9 as highest; on the 6.2 train use 6.2.20+ for CRITICAL XsltView/SSE fixes and 6.2.19+ for other advisories via Boot BOM / `spring-framework.version`. Petclinic uses Thymeleaf views, not XsltView or SSE fragments—CRITICAL preconditions unlikely but upgrade still warranted."
     }
    ]
   },
