@@ -136,7 +136,7 @@ hold:
 
 - Severity is `CRITICAL` (`AUTO_REMEDIATE_SEVERITIES`)
 - A version bump alone fixes it, and a recommended version exists
-- It is not a major bump, and not a downgrade
+- It is not a downgrade. A major bump is included and still opens a pull request
 
 Everything else is reported, never silently upgraded. Widening the rule is one line, and it
 takes effect across the whole fleet on the next run — that is the point of a control plane.

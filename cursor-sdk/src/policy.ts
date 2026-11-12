@@ -75,19 +75,13 @@ export function decide(item: TriageItem): PolicyDecision {
       item,
     };
   }
-  if (
+  const major =
     item.isMajorBump ||
-    isMajorBump(item.currentVersion, item.recommendedVersion)
-  ) {
-    return {
-      action: "comment_only",
-      reason: `major bump ${item.currentVersion} → ${item.recommendedVersion} needs a human`,
-      item,
-    };
-  }
+    isMajorBump(item.currentVersion, item.recommendedVersion);
+  const kind = major ? "major" : "patch/minor";
   return {
     action: "auto_remediate",
-    reason: `CRITICAL patch/minor bump ${item.currentVersion} → ${item.recommendedVersion}`,
+    reason: `${severity} ${kind} bump ${item.currentVersion} → ${item.recommendedVersion}`,
     item,
   };
 }

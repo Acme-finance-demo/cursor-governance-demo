@@ -178,9 +178,9 @@ npx tsx src/cli.ts resume \
 - 重大度が `CRITICAL`（`AUTO_REMEDIATE_SEVERITIES`）
 - バージョンを上げるだけで直せる
 - 推奨バージョンがある
-- メジャーバージョン上げではない（先頭の数字成分が上がらない）
+- ダウングレードではない。メジャーバージョン上げ（先頭の数字が上がる）でもプルリクエストを作る
 
-それ以外は `comment_only` で、MR / PR 本文の TODO に回します。Spring Boot 本体の 3.x → 4.x などは人が判断します。
+それ以外は `comment_only` で、MR / PR 本文の TODO に回します。CRITICAL のメジャー上げ（Spring Boot 本体の 3.x → 4.x を含む）は、レビュー用のプルリクエストを開きます。
 
 面接で拡張するなら、`AUTO_REMEDIATE_SEVERITIES` に `"HIGH"` を足すのが最短です。
 

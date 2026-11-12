@@ -178,9 +178,9 @@ Decisions live in `src/policy.ts`. The orchestrator does not take the agent's re
 - Severity is `CRITICAL` (`AUTO_REMEDIATE_SEVERITIES`)
 - A version bump alone is enough
 - A recommended version exists
-- It is not a major bump (first numeric component does not increase)
+- It is not a downgrade. A major bump (the leading version number increases) still opens a pull request
 
-Everything else is `comment_only` and becomes a TODO in the MR/PR body. Spring Boot 3.x → 4.x stays a human decision.
+Everything else is `comment_only` and becomes a TODO in the MR/PR body. A CRITICAL major bump, including Spring Boot 3.x → 4.x, opens a pull request for review.
 
 The shortest live extension is adding `"HIGH"` to `AUTO_REMEDIATE_SEVERITIES`.
 

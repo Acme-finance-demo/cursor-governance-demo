@@ -1068,8 +1068,8 @@ def policy_parameter_notes(severities):
             "Fixed in <code>decide</code>."
         ),
         (
-            "Major bump — a bump that raises the leading version number is left for a person. "
-            "A patch or minor bump inside the same major version can proceed. "
+            "Major bump — a bump that raises the leading version number is included. "
+            "For a severity in the set, patch, minor, and major all open a fix pull request. "
             "Fixed in <code>decide</code>."
         ),
     ]

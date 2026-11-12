@@ -95,7 +95,7 @@ sequenceDiagram
     Cursor-->>Triage: 作業ツリー
     Triage-->>CLI: JSON
 
-    CLI->>Policy: CRITICAL か / バージョン上げだけで直せるか / メジャーではないか
+    CLI->>Policy: CRITICAL か / バージョン上げだけで直せるか / ダウングレードではないか
     Policy-->>CLI: decisions[]
 
     alt auto_remediate が 0件
@@ -118,7 +118,7 @@ Policy の中身は次のすべてを満たすときだけ `auto_remediate` で�
 
 1. 重大度が CRITICAL
 2. バージョンを上げるだけで直せる（`recommendedVersion` あり）
-3. メジャーバージョン上げではない（先頭の数字が上がらない）
+3. ダウングレードではない。メジャーバージョン上げでもプルリクエストを作る
 
 MR / PR 本文は TypeScript が書いていません。`remediatePrompt` を読んだ Fix agent が書きます。影響分析は `impactPrompt` が **英語で MR / PR / Issue 本文に追記** します（コメントではない）。
 

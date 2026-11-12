@@ -85,7 +85,7 @@ petclinic, web, api, …               監査対象のリポジトリ
 | `ecosystem.ts` | ツリー内のマニフェストから Maven / Gradle / npm / Go / Python を判定し、プロンプトに差し込む更新ルールとテストコマンドを供給する |
 | `orchestrate.ts` | 手順の組み立て。レポート → トリアージ → Policy → 修正。エージェントを何台立てるかはここが決める |
 | `agent.ts` | `@cursor/sdk` の薄い包み。`Agent.create` / `resume`、stream、`wait()`、起動失敗と run 失敗の切り分け |
-| `policy.ts` | 自動修正してよいかの判定。重大度、直せるか、メジャーバージョンが上がるか。エージェントの提案は信用しすぎない |
+| `policy.ts` | 自動修正してよいかの判定。重大度、直せるか、ダウングレードでないか。メジャー上げは許可する。エージェントの提案は信用しすぎない |
 | `parse-report.ts` | Trivy の JSON を `Finding` に直し、パッケージでグループ化する |
 | `prompts.ts` | トリアージ・修正・影響分析・resume のプロンプト。エージェント出力から JSON を抜く |
 | `state.ts` | `agentId` などを `.cursor/vuln-orchestrator-state.json` に保存・読み込み。resume 用 |
@@ -138,11 +138,11 @@ petclinic, web, api, …               監査対象のリポジトリ
 
 ## Policy がコードにある理由
 
-「全部エージェントに任せる」と、Spring Boot のメジャーバージョン上げまで自動になり得ます。企業では通らないので、自動にする条件は `policy.ts` に固定しています。
+「全部エージェントに任せる」と、どの深刻度でも自動で上げ得ます。自動にする条件は `policy.ts` に固定しています。
 
 - `CRITICAL` だけ自動（`AUTO_REMEDIATE_SEVERITIES`）
 - バージョンを上げるだけで直せる
-- メジャーバージョン上げではない（先頭の数字が上がらない）
+- ダウングレードではない。メジャーバージョン上げでもプルリクエストを作る
 
 面接で足すなら、この Set に `"HIGH"` を足すのが最短です。
 

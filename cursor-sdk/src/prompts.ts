@@ -70,7 +70,7 @@ export function remediatePrompt(
 
 Policy already ran in the caller. Follow it exactly.
 
-AUTO-REMEDIATE these packages (minimal version bumps only):
+AUTO-REMEDIATE these packages. Apply each recommended version, including when it is a major bump:
 ${JSON.stringify(auto, null, 2)}
 
 DO NOT bump these; mention them in the ${vocab.prShort} description as TODOs:

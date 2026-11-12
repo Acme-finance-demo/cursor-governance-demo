@@ -95,7 +95,7 @@ sequenceDiagram
     Cursor-->>Triage: working tree
     Triage-->>CLI: JSON
 
-    CLI->>Policy: CRITICAL? bump-only? not major?
+    CLI->>Policy: CRITICAL? bump-only? not a downgrade?
     Policy-->>CLI: decisions[]
 
     alt zero auto_remediate
@@ -118,7 +118,7 @@ sequenceDiagram
 
 1. Severity is CRITICAL
 2. A version bump alone is enough (`recommendedVersion` present)
-3. Not a major bump (first numeric component does not increase)
+3. Not a downgrade. A major bump still opens a pull request
 
 The MR/PR body is not a TypeScript template. The Fix agent writes it from `remediatePrompt`. Impact analysis from `impactPrompt` is **appended in English to the MR/PR/Issue description**, not posted as a comment.
 
