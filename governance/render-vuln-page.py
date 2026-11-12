@@ -15,6 +15,7 @@ import argparse
 import html
 import json
 import pathlib
+import re
 from datetime import datetime, timezone
 
 SEVERITIES = ("CRITICAL", "HIGH", "MEDIUM")
@@ -187,6 +188,15 @@ input[type="search"] { min-width: 200px; }
 section { margin-top: 32px; }
 h2 { font-size: 17px; font-weight: 600; margin: 0 0 2px; letter-spacing: -0.005em; }
 .sub-head { color: var(--text-secondary); font-size: 13.5px; margin: 0 0 14px; }
+.policy-params {
+  margin: 0 0 16px; padding: 0 0 0 1.25em;
+  color: var(--text-secondary); font-size: 13.5px;
+}
+.policy-params li { margin: 0 0 6px; }
+.policy-params code, .sub-head code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12.5px; color: var(--text-primary);
+}
 .charts { display: grid; grid-template-columns: 1.25fr 1fr; gap: 16px; align-items: start; }
 @media (max-width: 960px) { .charts { grid-template-columns: 1fr; } }
 
@@ -406,9 +416,12 @@ $severity_chips
 
 <section>
   <h2>What the policy did about them</h2>
-  <p class="sub-head">The control plane auto-remediates only CRITICAL findings that a
-    non-major version bump fixes. Everything else is reported, never silently upgraded.
-    These four numbers describe the scan above and are not affected by the filters.</p>
+  <p class="sub-head">These four numbers describe the scan above and are not affected by the filters.
+    What counts as auto-remediated is decided in
+    <a href="$policy_url"><code>cursor-sdk/src/policy.ts</code></a>.</p>
+  <ul class="policy-params">
+$policy_bullets
+  </ul>
   <p class="sub-head">$coverage_note</p>
   <div class="gov">
     <div class="card tile">
@@ -1017,6 +1030,52 @@ SEV_NOTE = {
 }
 
 
+POLICY_PATH = pathlib.Path(__file__).resolve().parent.parent / "cursor-sdk" / "src" / "policy.ts"
+
+
+def read_auto_remediate_severities(path=POLICY_PATH):
+    """The one value policy.ts exposes for editing: AUTO_REMEDIATE_SEVERITIES."""
+    text = path.read_text()
+    match = re.search(
+        r"AUTO_REMEDIATE_SEVERITIES\s*=\s*new Set\(\[([^\]]*)\]\)",
+        text,
+    )
+    if not match:
+        raise SystemExit(f"AUTO_REMEDIATE_SEVERITIES not found in {path}")
+    return re.findall(r'"([A-Z]+)"', match.group(1))
+
+
+def policy_parameter_notes(severities):
+    current = ", ".join(f"<code>{html.escape(sev)}</code>" for sev in severities)
+    if not current:
+        current = "<code>(empty)</code>"
+    items = [
+        (
+            "<code>AUTO_REMEDIATE_SEVERITIES</code> — the severities allowed to open a "
+            f"fix pull request. Currently {current}. Add <code>\"HIGH\"</code> or "
+            "<code>\"MEDIUM\"</code> to that set to auto-upgrade that level too. A severity "
+            "left out of the set is reported and never auto-upgraded. This is the value "
+            "you edit."
+        ),
+        (
+            "Recommended version — a severity in the set is still refused when the advisory "
+            "has no fixed version, or the fix is not a version bump. There is no switch for "
+            "this; it is fixed in <code>decide</code>."
+        ),
+        (
+            "Downgrade — a recommended version older than the installed one is refused. "
+            "Trivy can list several fixed versions, and an older line is not applied. "
+            "Fixed in <code>decide</code>."
+        ),
+        (
+            "Major bump — a bump that raises the leading version number is left for a person. "
+            "A patch or minor bump inside the same major version can proceed. "
+            "Fixed in <code>decide</code>."
+        ),
+    ]
+    return "\n".join(f"    <li>{item}</li>" for item in items)
+
+
 def sev_icon(sev, size=13):
     return (
         f'<svg class="sev-icon" width="{size}" height="{size}" viewBox="0 0 16 16" '
@@ -1159,6 +1218,11 @@ def render(snapshot):
         already_open=already_open,
         critical_repos=critical_repos,
         coverage_note=coverage_note,
+        policy_url=(
+            f"https://github.com/{owner}/cursor-governance-demo/blob/main/"
+            "cursor-sdk/src/policy.ts"
+        ),
+        policy_bullets=policy_parameter_notes(read_auto_remediate_severities()),
         pr_subhead=pr_subhead,
         pr_items=pr_items,
         data_json=json.dumps(snapshot, ensure_ascii=False, separators=(",", ":")).replace(
