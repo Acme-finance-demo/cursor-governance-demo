@@ -85,7 +85,7 @@ petclinic, web, api, …               the audited repositories
 | `ecosystem.ts` | Detect Maven / Gradle / npm / Go / Python from the manifests in the tree, and supply the upgrade rules and test commands the prompts inject |
 | `orchestrate.ts` | The pipeline: report → triage → policy → remediate. Decides how many agents to start |
 | `agent.ts` | Thin `@cursor/sdk` wrapper. `Agent.create` / `resume`, stream, `wait()`, startup vs run failures |
-| `policy.ts` | Whether a bump may be automatic: severity, fixable by version, major bump. Does not trust the agent blindly |
+| `policy.ts` | Whether a bump may be automatic: severity, fixable by version, not a downgrade. A major bump is allowed. Does not trust the agent blindly |
 | `parse-report.ts` | Normalize Trivy JSON into `Finding`s, group by package |
 | `prompts.ts` | Triage / remediate / impact / resume prompts, plus JSON extraction from agent text |
 | `state.ts` | Persist `agentId`s to `.cursor/vuln-orchestrator-state.json` for resume |
@@ -138,11 +138,11 @@ petclinic, web, api, …               the audited repositories
 
 ## Why policy is code
 
-If the agent decides everything, it may major-bump Spring Boot on its own. That does not fly in an enterprise, so the allow-list lives in `policy.ts`:
+If the agent decides everything, it may auto-upgrade any severity. The allow-list lives in `policy.ts`:
 
 - `CRITICAL` only (`AUTO_REMEDIATE_SEVERITIES`)
 - Fixable by a version bump
-- Not a major bump (first numeric component does not increase)
+- Not a downgrade. A major bump is included and opens a pull request for review
 
 The shortest live extension is adding `"HIGH"` to that set.
 

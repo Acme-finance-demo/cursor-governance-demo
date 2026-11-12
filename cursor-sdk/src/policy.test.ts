@@ -109,15 +109,22 @@ test("policy auto-remediates CRITICAL patch bumps", () => {
   assert.equal(decide(item({})).action, "auto_remediate");
 });
 
-test("policy defers major bumps even when the agent says it is safe", () => {
-  const decision = decide(
-    item({
-      currentVersion: "3.5.0",
-      recommendedVersion: "4.0.0",
-      isMajorBump: false,
-    }),
-  );
-  assert.equal(decision.action, "comment_only");
+test("policy auto-remediates a CRITICAL major bump", () => {
+  for (const flagged of [false, true]) {
+    const decision = decide(
+      item({
+        currentVersion: "3.5.0",
+        recommendedVersion: "4.0.0",
+        isMajorBump: flagged,
+      }),
+    );
+    assert.equal(decision.action, "auto_remediate");
+    assert.match(decision.reason, /major bump 3\.5\.0 → 4\.0\.0/);
+  }
+});
+
+test("policy still defers HIGH, including a patch bump", () => {
+  assert.equal(decide(item({ severity: "HIGH" })).action, "comment_only");
 });
 
 test("policy defers findings without a fixed version", () => {
