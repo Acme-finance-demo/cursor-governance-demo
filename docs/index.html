@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Fleet vulnerability report</title>
-<meta name="description" content="79 open dependency vulnerabilities across 8 repositories owned by Acme-finance-demo, as of 2026-11-10 23:05 UTC.">
+<meta name="description" content="79 open dependency vulnerabilities across 8 repositories owned by Acme-finance-demo, as of 2026-11-10T23:05:49.361294384Z.">
 <style>
 :root {
   color-scheme: light;
@@ -118,8 +118,15 @@ button.ghost:hover { color: var(--text-primary); border-color: var(--baseline); 
 .tile { display: flex; flex-direction: column; }
 .tile .label { display: flex; align-items: center; gap: 7px;
   color: var(--text-secondary); font-size: 13px; }
+.tile a.sev-jump {
+  color: inherit; text-decoration: underline; text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+}
+.tile a.sev-jump:hover,
+.tile a.sev-jump:focus-visible { color: var(--text-primary); }
 .tile .value { font-size: 30px; font-weight: 600; letter-spacing: -0.01em; margin: 4px 0 0; }
 .tile .sub { color: var(--text-muted); font-size: 12.5px; }
+#findings { scroll-margin-top: 16px; }
 
 /* severity icon: shape differs per level, so hue is never the only cue */
 .sev-icon { flex: none; display: inline-block; vertical-align: -2px; }
@@ -294,7 +301,7 @@ footer a { color: var(--text-secondary); }
   </div>
   <div>
     <div class="provenance">
-      Scanned <strong>2026-11-10 23:05 UTC</strong><br>
+      Scanned <strong>2026-11-10T23:05:49.361294384Z</strong><br>
       Page built <strong>2026-11-10 23:07 UTC</strong><br>
       Trivy 0.74.0 &middot; <a href="https://github.com/Acme-finance-demo/cursor-governance-demo/actions/runs/42920374525">workflow run</a>
     </div>
@@ -318,17 +325,17 @@ footer a { color: var(--text-secondary); }
   </div>
   <div class="tiles">
     <div class="card tile">
-      <span class="label"><svg class="sev-icon" width="13" height="13" viewBox="0 0 16 16" aria-hidden="true" fill="var(--sev-critical)"><rect x="1.4" y="1.4" width="13.2" height="13.2" rx="2.4"/></svg>CRITICAL</span>
+      <span class="label"><svg class="sev-icon" width="13" height="13" viewBox="0 0 16 16" aria-hidden="true" fill="var(--sev-critical)"><rect x="1.4" y="1.4" width="13.2" height="13.2" rx="2.4"/></svg><a class="sev-jump" href="#findings-CRITICAL" data-severity="CRITICAL">CRITICAL</a></span>
       <span class="value">2</span>
       <span class="sub">2% of findings &middot; the policy auto-remediates these</span>
     </div>
     <div class="card tile">
-      <span class="label"><svg class="sev-icon" width="13" height="13" viewBox="0 0 16 16" aria-hidden="true" fill="var(--sev-high)"><polygon points="8,1 15.4,14.4 0.6,14.4"/></svg>HIGH</span>
+      <span class="label"><svg class="sev-icon" width="13" height="13" viewBox="0 0 16 16" aria-hidden="true" fill="var(--sev-high)"><polygon points="8,1 15.4,14.4 0.6,14.4"/></svg><a class="sev-jump" href="#findings-HIGH" data-severity="HIGH">HIGH</a></span>
       <span class="value">33</span>
       <span class="sub">41% of findings &middot; reported, never auto-upgraded</span>
     </div>
     <div class="card tile">
-      <span class="label"><svg class="sev-icon" width="13" height="13" viewBox="0 0 16 16" aria-hidden="true" fill="var(--sev-medium)"><circle cx="8" cy="8" r="6.6"/></svg>MEDIUM</span>
+      <span class="label"><svg class="sev-icon" width="13" height="13" viewBox="0 0 16 16" aria-hidden="true" fill="var(--sev-medium)"><circle cx="8" cy="8" r="6.6"/></svg><a class="sev-jump" href="#findings-MEDIUM" data-severity="MEDIUM">MEDIUM</a></span>
       <span class="value">44</span>
       <span class="sub">55% of findings &middot; reported, never auto-upgraded</span>
     </div>
@@ -428,10 +435,11 @@ footer a { color: var(--text-secondary); }
   <div class="card"><ul class="pr-list"><li><span class="pr-repo">spring-petclinic-cursor</span><span class="pr-title"><a href="https://github.com/Acme-finance-demo/spring-petclinic-cursor/pull/8" rel="noreferrer">fix(deps): bump Spring Framework for spring-webmvc (CVE-2026-47884, CVE-2026-47890, …)</a></span><span class="pr-num">#8</span></li></ul></div>
 </section>
 
-<section>
+<section id="findings">
   <h2>Every finding</h2>
   <p class="sub-head">The full list behind the charts &mdash; the table view, so no value
-    is reachable only by hovering. Click a column heading to sort.</p>
+    is reachable only by hovering. CRITICAL, HIGH and MEDIUM in the tiles above open
+    this list filtered to that severity. Click a column heading to sort.</p>
   <div class="table-wrap">
     <table id="findings-table">
       <thead><tr>
@@ -504,6 +512,35 @@ const state = {
   sort: 'severity',
   dir: 'desc'
 };
+
+function severityFromLocation() {
+  const match = /^#findings-(CRITICAL|HIGH|MEDIUM)$/.exec(location.hash);
+  return match ? match[1] : '';
+}
+
+function syncSeverityChips() {
+  for (const chip of document.querySelectorAll('.chip[data-severity]')) {
+    chip.setAttribute('aria-pressed', String(state.severities.has(chip.dataset.severity)));
+  }
+}
+
+/* One selected severity is recorded in the hash, so the tile links are real
+   history entries and the back button returns to the previous breakdown. */
+function reflectSeverityHash() {
+  const only = state.severities.size === 1 ? Array.from(state.severities)[0] : '';
+  const next = only ? '#findings-' + only : '';
+  if ((location.hash || '') === next) return;
+  history.replaceState(null, '', location.pathname + location.search + next);
+}
+
+function showSeverity(sev, scroll) {
+  state.severities = new Set([sev]);
+  syncSeverityChips();
+  render();
+  if (scroll) {
+    document.getElementById('findings').scrollIntoView({ behavior: 'auto', block: 'start' });
+  }
+}
 
 function matches(f) {
   if (!state.severities.has(f.severity)) return false;
@@ -867,8 +904,21 @@ for (const chip of document.querySelectorAll('.chip[data-severity]')) {
     }
     chip.setAttribute('aria-pressed', String(state.severities.has(sev)));
     render();
+    reflectSeverityHash();
   });
 }
+
+for (const link of document.querySelectorAll('a.sev-jump')) {
+  link.addEventListener('click', () => {
+    const sev = link.dataset.severity;
+    if (location.hash === '#findings-' + sev) showSeverity(sev, true);
+  });
+}
+
+window.addEventListener('hashchange', () => {
+  const sev = severityFromLocation();
+  if (sev) showSeverity(sev, true);
+});
 
 const repoSelect = document.getElementById('f-repo');
 const ecoSelect = document.getElementById('f-eco');
@@ -893,6 +943,9 @@ document.getElementById('reset-btn').addEventListener('click', () => {
   querySearch.value = '';
   markSort();
   render();
+  if (location.hash) {
+    history.pushState(null, '', location.pathname + location.search);
+  }
 });
 
 function markSort() {
@@ -928,8 +981,14 @@ themeBtn.addEventListener('click', () => {
 });
 
 window.addEventListener('scroll', hideTip, { passive: true });
+const openedAt = severityFromLocation();
+if (openedAt) state.severities = new Set([openedAt]);
 markSort();
 render();
+if (openedAt) {
+  syncSeverityChips();
+  document.getElementById('findings').scrollIntoView({ behavior: 'auto', block: 'start' });
+}
 </script>
 </body>
 </html>
