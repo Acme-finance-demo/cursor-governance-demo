@@ -1,10 +1,10 @@
 {
  "owner": "Acme-finance-demo",
- "generatedAt": "2026-11-12T01:13:04+00:00",
- "scannedAt": "2026-11-12T01:12:23.917735074Z",
+ "generatedAt": "2026-11-12T01:16:29+00:00",
+ "scannedAt": "2026-11-12T01:14:01.085609538Z",
  "scanner": "Trivy 0.74.0",
- "runId": "43132833458",
- "runUrl": "https://github.com/Acme-finance-demo/cursor-governance-demo/actions/runs/43132833458",
+ "runId": "43133021394",
+ "runUrl": "https://github.com/Acme-finance-demo/cursor-governance-demo/actions/runs/43133021394",
  "repos": [
   {
    "slug": "Acme-finance-demo/auth-service",
@@ -114,9 +114,268 @@
     "MEDIUM": 24
    },
    "packages": 14,
-   "remediationRan": false,
+   "remediationRan": true,
    "error": "",
-   "decisions": []
+   "decisions": [
+    {
+     "action": "comment_only",
+     "reason": "severity MEDIUM is outside the auto-remediate set",
+     "outcome": "",
+     "prUrl": "",
+     "package": "ch.qos.logback:logback-core",
+     "currentVersion": "1.5.18",
+     "recommendedVersion": "1.5.19",
+     "severity": "MEDIUM",
+     "cves": [
+      "CVE-2025-11226"
+     ],
+     "isDirectDependency": false,
+     "isMajorBump": false,
+     "notes": "Transitive from spring-boot-starter-logging → logback-classic. Conditional-config ACE needs Janino plus writable config; low practical risk for this Thymeleaf MVC app. Set logback.version in pom.xml properties or ext['logback.version'] in build.gradle, matching existing override style."
+    },
+    {
+     "action": "comment_only",
+     "reason": "severity HIGH is outside the auto-remediate set",
+     "outcome": "",
+     "prUrl": "",
+     "package": "com.fasterxml.jackson.core:jackson-core",
+     "currentVersion": "2.19.0",
+     "recommendedVersion": "2.22.3",
+     "severity": "HIGH",
+     "cves": [
+      "CVE-2026-68494",
+      "CVE-2026-89407",
+      "CVE-2026-89425",
+      "CVE-2026-18401"
+     ],
+     "isDirectDependency": false,
+     "isMajorBump": false,
+     "notes": "BOM-managed via spring-boot-starter-json and jackson-databind. Async-parser and regex DoS matter mainly for reactive/chunked parsing; this app is servlet MVC but Jackson is on the classpath. Bump jackson-bom via Boot upgrade or a managed jackson-bom.version override so core,.databind, and modules stay aligned."
+    },
+    {
+     "action": "comment_only",
+     "reason": "severity HIGH is outside the auto-remediate set",
+     "outcome": "",
+     "prUrl": "",
+     "package": "com.fasterxml.jackson.core:jackson-databind",
+     "currentVersion": "2.19.0",
+     "recommendedVersion": "2.22.3",
+     "severity": "HIGH",
+     "cves": [
+      "CVE-2026-54512",
+      "CVE-2026-54513",
+      "CVE-2026-68497",
+      "CVE-2026-91776",
+      "CVE-2026-91777",
+      "CVE-2026-19032",
+      "CVE-2026-54514",
+      "CVE-2026-54515",
+      "CVE-2026-59888",
+      "CVE-2026-59889",
+      "CVE-2026-77310",
+      "CVE-2026-83557"
+     ],
+     "isDirectDependency": false,
+     "isMajorBump": false,
+     "notes": "Same BOM chain as jackson-core. Several issues need polymorphic typing, Path/XML types, or identity collections; Petclinic uses default ObjectMapper-style binding without those patterns, but upgrades are still warranted. Coordinate with jackson-core to 2.22.3."
+    },
+    {
+     "action": "comment_only",
+     "reason": "severity HIGH is outside the auto-remediate set",
+     "outcome": "",
+     "prUrl": "",
+     "package": "io.micrometer:micrometer-core",
+     "currentVersion": "1.15.0",
+     "recommendedVersion": "1.15.12",
+     "severity": "HIGH",
+     "cves": [
+      "CVE-2026-40983",
+      "CVE-2026-40984"
+     ],
+     "isDirectDependency": false,
+     "isMajorBump": false,
+     "notes": "Transitive through spring-boot-starter-actuator (direct runtime starter). HTTP/gRPC DoS fixes are patch bumps on the 1.15 line; resolved by Boot BOM refresh or micrometer.version property override."
+    },
+    {
+     "action": "comment_only",
+     "reason": "severity MEDIUM is outside the auto-remediate set",
+     "outcome": "",
+     "prUrl": "",
+     "package": "org.apache.logging.log4j:log4j-api",
+     "currentVersion": "2.24.3",
+     "recommendedVersion": "2.26.1",
+     "severity": "MEDIUM",
+     "cves": [
+      "CVE-2026-49844"
+     ],
+     "isDirectDependency": false,
+     "isMajorBump": false,
+     "notes": "Transitive via log4j-to-slf4j in Boot logging starter; SLF4J/Logback is the active backend. Issue affects MapMessage JSON layouts only. Override log4j2.version in parent properties or Gradle ext."
+    },
+    {
+     "action": "comment_only",
+     "reason": "severity HIGH is outside the auto-remediate set",
+     "outcome": "",
+     "prUrl": "",
+     "package": "org.postgresql:postgresql",
+     "currentVersion": "42.7.5",
+     "recommendedVersion": "42.7.12",
+     "severity": "HIGH",
+     "cves": [
+      "CVE-2025-49146",
+      "CVE-2026-42198",
+      "CVE-2026-54291"
+     ],
+     "isDirectDependency": true,
+     "isMajorBump": false,
+     "notes": "Only direct coordinates without an explicit version; BOM supplies 42.7.5. Used when application-postgres profile or Postgres compose/k8s is enabled. Set postgresql.version in properties/ext or bump Boot BOM to a release that manages 42.7.12+."
+    },
+    {
+     "action": "comment_only",
+     "reason": "severity HIGH is outside the auto-remediate set",
+     "outcome": "",
+     "prUrl": "",
+     "package": "org.springframework.boot:spring-boot",
+     "currentVersion": "3.5.0",
+     "recommendedVersion": "3.5.15",
+     "severity": "HIGH",
+     "cves": [
+      "CVE-2026-40973"
+     ],
+     "isDirectDependency": false,
+     "isMajorBump": false,
+     "notes": "Jar is transitive from starters and devtools, not declared alone. ApplicationTemp/session persistence CVE needs local same-host attacker; still fix via spring-boot-starter-parent / Gradle plugin 3.5.15+ (≥3.5.14 per advisory)."
+    },
+    {
+     "action": "comment_only",
+     "reason": "severity MEDIUM is outside the auto-remediate set",
+     "outcome": "",
+     "prUrl": "",
+     "package": "org.springframework.boot:spring-boot-autoconfigure",
+     "currentVersion": "3.5.0",
+     "recommendedVersion": "3.5.15",
+     "severity": "MEDIUM",
+     "cves": [
+      "CVE-2026-41001"
+     ],
+     "isDirectDependency": false,
+     "isMajorBump": false,
+     "notes": "Transitive from all auto-configured starters. Embedded Artemis predictable path CVE; Petclinic does not embed Artemis, so exposure is low. Fixed on 3.5.15 alongside parent bump."
+    },
+    {
+     "action": "comment_only",
+     "reason": "severity HIGH is outside the auto-remediate set",
+     "outcome": "",
+     "prUrl": "",
+     "package": "org.springframework.boot:spring-boot-starter-actuator",
+     "currentVersion": "3.5.0",
+     "recommendedVersion": "3.5.15",
+     "severity": "HIGH",
+     "cves": [
+      "CVE-2026-22731",
+      "CVE-2026-22733"
+     ],
+     "isDirectDependency": true,
+     "isMajorBump": false,
+     "notes": "Direct dependency (Maven compile, Gradle runtimeOnly). Actuator health path auth-bypass CVEs need Boot ≥3.5.12; 3.5.15 also covers related autoconfigure/boot patches. Relevant because actuator is enabled in this project."
+    },
+    {
+     "action": "comment_only",
+     "reason": "severity HIGH is outside the auto-remediate set",
+     "outcome": "",
+     "prUrl": "",
+     "package": "org.springframework.data:spring-data-commons",
+     "currentVersion": "3.5.0",
+     "recommendedVersion": "3.5.12",
+     "severity": "HIGH",
+     "cves": [
+      "CVE-2026-41695",
+      "CVE-2026-41716",
+      "CVE-2026-41711",
+      "CVE-2026-41721"
+     ],
+     "isDirectDependency": false,
+     "isMajorBump": false,
+     "notes": "Transitive via spring-data-jpa from starter-data-jpa. Sort/property-path DoS affects apps exposing attacker-controlled sort or projection parameters; JPA repositories are in use. Resolved by Boot BOM at 3.5.12+."
+    },
+    {
+     "action": "comment_only",
+     "reason": "severity HIGH is outside the auto-remediate set",
+     "outcome": "",
+     "prUrl": "",
+     "package": "org.springframework:spring-core",
+     "currentVersion": "6.2.7",
+     "recommendedVersion": "6.2.11",
+     "severity": "HIGH",
+     "cves": [
+      "CVE-2025-41249"
+     ],
+     "isDirectDependency": false,
+     "isMajorBump": false,
+     "notes": "Transitive from the Spring stack (also pulled via spring-boot-starter-test). Annotation detection on generic supertypes affects @EnableMethodSecurity; verify method-security usage. Override spring-framework.version or upgrade Boot patch that imports Framework 6.2.11+."
+    },
+    {
+     "action": "comment_only",
+     "reason": "severity HIGH is outside the auto-remediate set",
+     "outcome": "",
+     "prUrl": "",
+     "package": "org.springframework:spring-expression",
+     "currentVersion": "6.2.7",
+     "recommendedVersion": "6.2.19",
+     "severity": "HIGH",
+     "cves": [
+      "CVE-2026-41850",
+      "CVE-2026-41851"
+     ],
+     "isDirectDependency": false,
+     "isMajorBump": false,
+     "notes": "Transitive via spring-webmvc. SpEL DoS needs user-supplied expressions; typical Petclinic controllers do not evaluate untrusted SpEL. Bump with spring-framework.version to 6.2.19."
+    },
+    {
+     "action": "comment_only",
+     "reason": "severity MEDIUM is outside the auto-remediate set",
+     "outcome": "",
+     "prUrl": "",
+     "package": "org.springframework:spring-web",
+     "currentVersion": "6.2.7",
+     "recommendedVersion": "6.2.19",
+     "severity": "MEDIUM",
+     "cves": [
+      "CVE-2025-41234",
+      "CVE-2026-41854"
+     ],
+     "isDirectDependency": false,
+     "isMajorBump": false,
+     "notes": "Transitive via spring-boot-starter-web. RFD needs ContentDisposition.Builder#filename(String, Charset) with untrusted names; SSRF via UriComponentsBuilder URL parsing. Framework 6.2.19 covers the listed 6.2.x fixes."
+    },
+    {
+     "action": "auto_remediate",
+     "reason": "CRITICAL major bump 6.2.7 → 7.0.9",
+     "outcome": "already_open",
+     "prUrl": "https://github.com/Acme-finance-demo/spring-petclinic-cursor/pull/8",
+     "package": "org.springframework:spring-webmvc",
+     "currentVersion": "6.2.7",
+     "recommendedVersion": "7.0.9",
+     "severity": "CRITICAL",
+     "cves": [
+      "CVE-2026-47884",
+      "CVE-2026-47890",
+      "CVE-2026-41842",
+      "CVE-2026-41845",
+      "CVE-2025-41242",
+      "CVE-2026-22737",
+      "CVE-2026-22745",
+      "CVE-2026-41841",
+      "CVE-2026-41843",
+      "CVE-2026-41844",
+      "CVE-2026-41846",
+      "CVE-2026-41853"
+     ],
+     "isDirectDependency": false,
+     "isMajorBump": true,
+     "notes": "Transitive via spring-boot-starter-web. Scanner lists 7.0.9 as the fix for two CRITICAL issues (XsltView RCE/SSE corruption) affecting through 6.2.19; other listed CVEs fix at 6.2.19 on the 6.2 line. No XsltView usage found in src. Full compliance with stated solutions likely requires Spring Boot 4.x (Framework 7.0.9)—a major platform bump—or a future 6.2.x backport not cited in every advisory. Boot 3.5.15 + spring-framework 6.2.19 is the pragmatic partial fix within current major versions."
+    }
+   ]
   },
   {
    "slug": "Acme-finance-demo/web-app-sample",
