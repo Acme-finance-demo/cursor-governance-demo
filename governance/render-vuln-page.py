@@ -139,8 +139,15 @@ button.ghost:hover { color: var(--text-primary); border-color: var(--baseline); 
 .tile { display: flex; flex-direction: column; }
 .tile .label { display: flex; align-items: center; gap: 7px;
   color: var(--text-secondary); font-size: 13px; }
+.tile a.sev-jump {
+  color: inherit; text-decoration: underline; text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+}
+.tile a.sev-jump:hover,
+.tile a.sev-jump:focus-visible { color: var(--text-primary); }
 .tile .value { font-size: 30px; font-weight: 600; letter-spacing: -0.01em; margin: 4px 0 0; }
 .tile .sub { color: var(--text-muted); font-size: 12.5px; }
+#findings { scroll-margin-top: 16px; }
 
 /* severity icon: shape differs per level, so hue is never the only cue */
 .sev-icon { flex: none; display: inline-block; vertical-align: -2px; }
@@ -433,10 +440,11 @@ $severity_chips
   <div class="card"><ul class="pr-list">$pr_items</ul></div>
 </section>
 
-<section>
+<section id="findings">
   <h2>Every finding</h2>
   <p class="sub-head">The full list behind the charts &mdash; the table view, so no value
-    is reachable only by hovering. Click a column heading to sort.</p>
+    is reachable only by hovering. CRITICAL, HIGH and MEDIUM in the tiles above open
+    this list filtered to that severity. Click a column heading to sort.</p>
   <div class="table-wrap">
     <table id="findings-table">
       <thead><tr>
@@ -514,6 +522,35 @@ const state = {
   sort: 'severity',
   dir: 'desc'
 };
+
+function severityFromLocation() {
+  const match = /^#findings-(CRITICAL|HIGH|MEDIUM)$/.exec(location.hash);
+  return match ? match[1] : '';
+}
+
+function syncSeverityChips() {
+  for (const chip of document.querySelectorAll('.chip[data-severity]')) {
+    chip.setAttribute('aria-pressed', String(state.severities.has(chip.dataset.severity)));
+  }
+}
+
+/* One selected severity is recorded in the hash, so the tile links are real
+   history entries and the back button returns to the previous breakdown. */
+function reflectSeverityHash() {
+  const only = state.severities.size === 1 ? Array.from(state.severities)[0] : '';
+  const next = only ? '#findings-' + only : '';
+  if ((location.hash || '') === next) return;
+  history.replaceState(null, '', location.pathname + location.search + next);
+}
+
+function showSeverity(sev, scroll) {
+  state.severities = new Set([sev]);
+  syncSeverityChips();
+  render();
+  if (scroll) {
+    document.getElementById('findings').scrollIntoView({ behavior: 'auto', block: 'start' });
+  }
+}
 
 function matches(f) {
   if (!state.severities.has(f.severity)) return false;
@@ -877,8 +914,21 @@ for (const chip of document.querySelectorAll('.chip[data-severity]')) {
     }
     chip.setAttribute('aria-pressed', String(state.severities.has(sev)));
     render();
+    reflectSeverityHash();
   });
 }
+
+for (const link of document.querySelectorAll('a.sev-jump')) {
+  link.addEventListener('click', () => {
+    const sev = link.dataset.severity;
+    if (location.hash === '#findings-' + sev) showSeverity(sev, true);
+  });
+}
+
+window.addEventListener('hashchange', () => {
+  const sev = severityFromLocation();
+  if (sev) showSeverity(sev, true);
+});
 
 const repoSelect = document.getElementById('f-repo');
 const ecoSelect = document.getElementById('f-eco');
@@ -903,6 +953,9 @@ document.getElementById('reset-btn').addEventListener('click', () => {
   querySearch.value = '';
   markSort();
   render();
+  if (location.hash) {
+    history.pushState(null, '', location.pathname + location.search);
+  }
 });
 
 function markSort() {
@@ -938,8 +991,14 @@ themeBtn.addEventListener('click', () => {
 });
 
 window.addEventListener('scroll', hideTip, { passive: true });
+const openedAt = severityFromLocation();
+if (openedAt) state.severities = new Set([openedAt]);
 markSort();
 render();
+if (openedAt) {
+  syncSeverityChips();
+  document.getElementById('findings').scrollIntoView({ behavior: 'auto', block: 'start' });
+}
 """
 
 # ページ上で使う色。palette.md の status パレットと categorical slot 1。
@@ -1002,7 +1061,7 @@ def render(snapshot):
 
     severity_tiles = "\n".join(
         f"""    <div class="card tile">
-      <span class="label">{sev_icon(sev)}{sev}</span>
+      <span class="label">{sev_icon(sev)}<a class="sev-jump" href="#findings-{sev}" data-severity="{sev}">{sev}</a></span>
       <span class="value">{by_severity[sev]:,}</span>
       <span class="sub">{by_severity[sev] * 100 // total if total else 0}% of findings &middot; {SEV_NOTE[sev]}</span>
     </div>"""
