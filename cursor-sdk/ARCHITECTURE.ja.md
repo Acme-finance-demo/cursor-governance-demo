@@ -98,7 +98,7 @@ petclinic, web, api, …               監査対象のリポジトリ
 
 | ファイル | 役割 |
 | --- | --- |
-| `scripts/trivy-scan.sh` | ローカル Trivy。CI と同じく CRITICAL/HIGH/MEDIUM、Trivy JSON、検出しても exit 0。自動修正は Policy が CRITICAL のみ |
+| `scripts/trivy-scan.sh` | ローカル Trivy。CI と同じく CRITICAL/HIGH/MEDIUM、Trivy JSON、検出しても exit 0。自動修正は Policy が CRITICAL と HIGH |
 | `fixtures/trivy-report.sample.json` | 実スキャンなしで CLI を試すための 1 件サンプル（Tomcat / CVE-2026-43515） |
 
 ### パッケージ設定
@@ -140,11 +140,11 @@ petclinic, web, api, …               監査対象のリポジトリ
 
 「全部エージェントに任せる」と、どの深刻度でも自動で上げ得ます。自動にする条件は `policy.ts` に固定しています。
 
-- `CRITICAL` だけ自動（`AUTO_REMEDIATE_SEVERITIES`）
+- `CRITICAL` と `HIGH` を自動（`AUTO_REMEDIATE_SEVERITIES`）
 - バージョンを上げるだけで直せる
 - ダウングレードではない。メジャーバージョン上げでもプルリクエストを作る
 
-面接で足すなら、この Set に `"HIGH"` を足すのが最短です。
+面接で足すなら、この Set に `"MEDIUM"` を足すのが最短です。
 
 ## ランタイム
 

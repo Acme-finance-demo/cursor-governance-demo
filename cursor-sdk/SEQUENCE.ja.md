@@ -95,7 +95,7 @@ sequenceDiagram
     Cursor-->>Triage: 作業ツリー
     Triage-->>CLI: JSON
 
-    CLI->>Policy: CRITICAL か / バージョン上げだけで直せるか / ダウングレードではないか
+    CLI->>Policy: CRITICAL か HIGH か / バージョン上げだけで直せるか / ダウングレードではないか
     Policy-->>CLI: decisions[]
 
     alt auto_remediate が 0件
@@ -116,7 +116,7 @@ sequenceDiagram
 
 Policy の中身は次のすべてを満たすときだけ `auto_remediate` です。
 
-1. 重大度が CRITICAL
+1. 重大度が CRITICAL または HIGH
 2. バージョンを上げるだけで直せる（`recommendedVersion` あり）
 3. ダウングレードではない。メジャーバージョン上げでもプルリクエストを作る
 

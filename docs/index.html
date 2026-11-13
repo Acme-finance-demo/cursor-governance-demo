@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Fleet vulnerability report</title>
-<meta name="description" content="79 open dependency vulnerabilities across 8 repositories owned by Acme-finance-demo, as of 2026-11-12 23:27 UTC.">
+<meta name="description" content="79 open dependency vulnerabilities across 8 repositories owned by Acme-finance-demo, as of 2026-11-12T23:27:04.235787727Z.">
 <style>
 :root {
   color-scheme: light;
@@ -310,7 +310,7 @@ footer a { color: var(--text-secondary); }
   </div>
   <div>
     <div class="provenance">
-      Scanned <strong>2026-11-12 23:27 UTC</strong><br>
+      Scanned <strong>2026-11-12T23:27:04.235787727Z</strong><br>
       Page built <strong>2026-11-12 23:29 UTC</strong><br>
       Trivy 0.74.0 &middot; <a href="https://github.com/Acme-finance-demo/cursor-governance-demo/actions/runs/43328899160">workflow run</a>
     </div>
@@ -341,7 +341,7 @@ footer a { color: var(--text-secondary); }
     <div class="card tile">
       <span class="label"><svg class="sev-icon" width="13" height="13" viewBox="0 0 16 16" aria-hidden="true" fill="var(--sev-high)"><polygon points="8,1 15.4,14.4 0.6,14.4"/></svg><a class="sev-jump" href="#findings-HIGH" data-severity="HIGH">HIGH</a></span>
       <span class="value">33</span>
-      <span class="sub">41% of findings &middot; reported, never auto-upgraded</span>
+      <span class="sub">41% of findings &middot; the policy auto-remediates these</span>
     </div>
     <div class="card tile">
       <span class="label"><svg class="sev-icon" width="13" height="13" viewBox="0 0 16 16" aria-hidden="true" fill="var(--sev-medium)"><circle cx="8" cy="8" r="6.6"/></svg><a class="sev-jump" href="#findings-MEDIUM" data-severity="MEDIUM">MEDIUM</a></span>
@@ -414,7 +414,7 @@ footer a { color: var(--text-secondary); }
     What counts as auto-remediated is decided in
     <a href="https://github.com/Acme-finance-demo/cursor-governance-demo/blob/main/cursor-sdk/src/policy.ts"><code>cursor-sdk/src/policy.ts</code></a>.</p>
   <ul class="policy-params">
-    <li><code>AUTO_REMEDIATE_SEVERITIES</code> — the severities allowed to open a fix pull request. Currently <code>CRITICAL</code>. Add <code>"HIGH"</code> or <code>"MEDIUM"</code> to that set to auto-upgrade that level too. A severity left out of the set is reported and never auto-upgraded. This is the value you edit.</li>
+    <li><code>AUTO_REMEDIATE_SEVERITIES</code> — the severities allowed to open a fix pull request. Currently <code>CRITICAL</code>, <code>HIGH</code>. Add another severity, such as <code>"MEDIUM"</code>, to that set to auto-upgrade it too. A severity left out of the set is reported and never auto-upgraded. This is the value you edit.</li>
     <li>Recommended version — a severity in the set is still refused when the advisory has no fixed version, or the fix is not a version bump. There is no switch for this; it is fixed in <code>decide</code>.</li>
     <li>Downgrade — a recommended version older than the installed one is refused. Trivy can list several fixed versions, and an older line is not applied. Fixed in <code>decide</code>.</li>
     <li>Major bump — a bump that raises the leading version number is included. For a severity in the set, patch, minor, and major all open a fix pull request. Fixed in <code>decide</code>.</li>

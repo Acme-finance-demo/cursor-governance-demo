@@ -59,7 +59,7 @@ cd cursor-sdk
 npm run scan -- ~/src/petclinic
 ```
 
-CRITICAL / HIGH / MEDIUM、Trivy ネイティブ JSON、検出しても exit 0。自動修正は Policy が CRITICAL だけ通す。レポートはカレントディレクトリの `trivy-report.json`。依存解決を省略するなら `npm run scan -- --skip-resolve ~/src/petclinic`。
+CRITICAL / HIGH / MEDIUM、Trivy ネイティブ JSON、検出しても exit 0。自動修正は Policy が CRITICAL と HIGH を通す。レポートはカレントディレクトリの `trivy-report.json`。依存解決を省略するなら `npm run scan -- --skip-resolve ~/src/petclinic`。
 
 スキャンからトリアージまで（推奨）。`--runtime local` と `--skip-remediate` が付くので、修正エージェントも PR も動きません:
 
@@ -175,14 +175,14 @@ npx tsx src/cli.ts resume \
 
 自動修正 (`auto_remediate`) になるのは次をすべて満たす場合です。
 
-- 重大度が `CRITICAL`（`AUTO_REMEDIATE_SEVERITIES`）
+- 重大度が `CRITICAL` または `HIGH`（`AUTO_REMEDIATE_SEVERITIES`）
 - バージョンを上げるだけで直せる
 - 推奨バージョンがある
 - ダウングレードではない。メジャーバージョン上げ（先頭の数字が上がる）でもプルリクエストを作る
 
 それ以外は `comment_only` で、MR / PR 本文の TODO に回します。CRITICAL のメジャー上げ（Spring Boot 本体の 3.x → 4.x を含む）は、レビュー用のプルリクエストを開きます。
 
-面接で拡張するなら、`AUTO_REMEDIATE_SEVERITIES` に `"HIGH"` を足すのが最短です。
+面接で拡張するなら、`AUTO_REMEDIATE_SEVERITIES` に `"MEDIUM"` を足すのが最短です。
 
 ## フリートモード（複数リポジトリ）
 

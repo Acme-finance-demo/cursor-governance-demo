@@ -125,7 +125,7 @@ NVD（GHSA なら GitHub Advisory Database）に差し替える。403 のボッ�
 
 判定は `cursor-sdk/src/policy.ts` です。次をすべて満たすときだけ自動修正します。
 
-- 重大度が `CRITICAL`（`AUTO_REMEDIATE_SEVERITIES`）
+- 重大度が `CRITICAL` または `HIGH`（`AUTO_REMEDIATE_SEVERITIES`）
 - バージョンを上げるだけで直り、推奨バージョンがある
 - ダウングレードでない。メジャー上げでもプルリクエストを作る
 
@@ -172,7 +172,7 @@ Go modules と npm の lockfile が 1 本に同居していました。所有者
 
 | パス | 役割 |
 | --- | --- |
-| `.github/workflows/fleet-governance.yml` | フリート実行。発見 → 全件を並列スキャン → CRITICAL のあるリポジトリだけ修正 → 横断レポート → Pages 断面の再生成 |
+| `.github/workflows/fleet-governance.yml` | フリート実行。発見 → 全件を並列スキャン → CRITICAL または HIGH のあるリポジトリだけ修正 → 横断レポート → Pages 断面の再生成 |
 | `.github/workflows/repo-scan.yml` | アプリ側が呼ぶ再利用可能ワークフロー |
 | `governance/discover.py` | run ごとにオーナーの持ちリポジトリを数え直す |
 | `governance/discovery.json` | 数え直す対象オーナー。ref と表示名の上書き |

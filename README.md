@@ -134,7 +134,7 @@ other.
 `cursor-sdk/src/policy.ts` decides. A package is auto-remediated only when all of these
 hold:
 
-- Severity is `CRITICAL` (`AUTO_REMEDIATE_SEVERITIES`)
+- Severity is `CRITICAL` or `HIGH` (`AUTO_REMEDIATE_SEVERITIES`)
 - A version bump alone fixes it, and a recommended version exists
 - It is not a downgrade. A major bump is included and still opens a pull request
 
@@ -184,7 +184,7 @@ rather than by guessing the number.
 
 | Path | Role |
 | --- | --- |
-| `.github/workflows/fleet-governance.yml` | Fleet run: discover, scan every repository in parallel, remediate the ones with CRITICAL findings, roll-up Issue, rebuild Pages |
+| `.github/workflows/fleet-governance.yml` | Fleet run: discover, scan every repository in parallel, remediate the ones with a CRITICAL or HIGH finding, roll-up Issue, rebuild Pages |
 | `.github/workflows/repo-scan.yml` | Reusable workflow application repositories call |
 | `governance/discover.py` | Enumerates the owners' repositories on every run |
 | `governance/discovery.json` | Which owners to enumerate; per-repository ref and name overrides |
