@@ -1023,11 +1023,10 @@ SEV_SHAPE = {
     "HIGH": '<polygon points="8,1 15.4,14.4 0.6,14.4"/>',
     "MEDIUM": '<circle cx="8" cy="8" r="6.6"/>',
 }
-SEV_NOTE = {
-    "CRITICAL": "the policy auto-remediates these",
-    "HIGH": "reported, never auto-upgraded",
-    "MEDIUM": "reported, never auto-upgraded",
-}
+def severity_note(sev, auto):
+    if sev in auto:
+        return "the policy auto-remediates these"
+    return "reported, never auto-upgraded"
 
 
 POLICY_PATH = pathlib.Path(__file__).resolve().parent.parent / "cursor-sdk" / "src" / "policy.ts"
@@ -1052,8 +1051,8 @@ def policy_parameter_notes(severities):
     items = [
         (
             "<code>AUTO_REMEDIATE_SEVERITIES</code> — the severities allowed to open a "
-            f"fix pull request. Currently {current}. Add <code>\"HIGH\"</code> or "
-            "<code>\"MEDIUM\"</code> to that set to auto-upgrade that level too. A severity "
+            f"fix pull request. Currently {current}. Add another severity, such as "
+            "<code>\"MEDIUM\"</code>, to that set to auto-upgrade it too. A severity "
             "left out of the set is reported and never auto-upgraded. This is the value "
             "you edit."
         ),
@@ -1101,6 +1100,7 @@ def render(snapshot):
     owner = snapshot["owner"]
     total = len(findings)
 
+    auto_severities = set(read_auto_remediate_severities())
     by_severity = {sev: sum(1 for f in findings if f["severity"] == sev) for sev in SEVERITIES}
     unique_cves = len({f["cve"] for f in findings})
     affected_packages = len({f["package"] for f in findings if f["package"]})
@@ -1122,7 +1122,7 @@ def render(snapshot):
         f"""    <div class="card tile">
       <span class="label">{sev_icon(sev)}<a class="sev-jump" href="#findings-{sev}" data-severity="{sev}">{sev}</a></span>
       <span class="value">{by_severity[sev]:,}</span>
-      <span class="sub">{by_severity[sev] * 100 // total if total else 0}% of findings &middot; {SEV_NOTE[sev]}</span>
+      <span class="sub">{by_severity[sev] * 100 // total if total else 0}% of findings &middot; {severity_note(sev, auto_severities)}</span>
     </div>"""
         for sev in SEVERITIES
     )

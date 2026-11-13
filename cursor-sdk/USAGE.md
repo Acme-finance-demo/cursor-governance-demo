@@ -59,7 +59,7 @@ cd cursor-sdk
 npm run scan -- ~/src/petclinic
 ```
 
-CRITICAL / HIGH / MEDIUM, native Trivy JSON, exit 0 even when findings exist. Auto-remediate stays CRITICAL-only in policy. The report is `trivy-report.json` in the current directory. Skip Maven resolution with `npm run scan -- --skip-resolve ~/src/petclinic`.
+CRITICAL / HIGH / MEDIUM, native Trivy JSON, exit 0 even when findings exist. Auto-remediate is CRITICAL and HIGH in policy. The report is `trivy-report.json` in the current directory. Skip Maven resolution with `npm run scan -- --skip-resolve ~/src/petclinic`.
 
 Scan through triage (recommended). `--runtime local` and `--skip-remediate` mean no fix agent and no PR:
 
@@ -175,14 +175,14 @@ Decisions live in `src/policy.ts`. The orchestrator does not take the agent's re
 
 `auto_remediate` requires all of:
 
-- Severity is `CRITICAL` (`AUTO_REMEDIATE_SEVERITIES`)
+- Severity is `CRITICAL` or `HIGH` (`AUTO_REMEDIATE_SEVERITIES`)
 - A version bump alone is enough
 - A recommended version exists
 - It is not a downgrade. A major bump (the leading version number increases) still opens a pull request
 
 Everything else is `comment_only` and becomes a TODO in the MR/PR body. A CRITICAL major bump, including Spring Boot 3.x → 4.x, opens a pull request for review.
 
-The shortest live extension is adding `"HIGH"` to `AUTO_REMEDIATE_SEVERITIES`.
+The shortest live extension is adding `"MEDIUM"` to `AUTO_REMEDIATE_SEVERITIES`.
 
 ## Fleet mode (many repositories)
 

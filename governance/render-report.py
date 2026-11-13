@@ -174,8 +174,8 @@ def main() -> None:
             "",
             "### Left for a human (policy did not auto-remediate)",
             "",
-            "Policy lives in `cursor-sdk/src/policy.ts`: CRITICAL only, fixable by a version bump, "
-            "including a major bump. Downgrades are refused. Everything else is reported, "
+            "Policy lives in `cursor-sdk/src/policy.ts`: CRITICAL and HIGH, fixable by a version bump, "
+            "including a major bump. Downgrades are refused. MEDIUM is reported, "
             "never silently upgraded.",
             "",
         ]

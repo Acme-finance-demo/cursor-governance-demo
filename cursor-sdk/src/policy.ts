@@ -1,7 +1,7 @@
 import type { PolicyDecision, TriageItem } from "./types.ts";
 
-/** Live-extend hook: add "HIGH" here to auto-remediate that severity too. */
-export const AUTO_REMEDIATE_SEVERITIES = new Set(["CRITICAL"]);
+/** Live-extend hook: add "MEDIUM" here to auto-remediate that severity too. */
+export const AUTO_REMEDIATE_SEVERITIES = new Set(["CRITICAL", "HIGH"]);
 
 function normalizeSeverity(severity: string): string {
   return severity.trim().toUpperCase();

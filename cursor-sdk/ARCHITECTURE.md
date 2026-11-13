@@ -98,7 +98,7 @@ petclinic, web, api, …               the audited repositories
 
 | File | Role |
 | --- | --- |
-| `scripts/trivy-scan.sh` | Local Trivy. Same as CI: CRITICAL/HIGH/MEDIUM, native Trivy JSON, exit 0 on findings. Auto-remediate stays CRITICAL-only in policy |
+| `scripts/trivy-scan.sh` | Local Trivy. Same as CI: CRITICAL/HIGH/MEDIUM, native Trivy JSON, exit 0 on findings. Auto-remediate is CRITICAL and HIGH in policy |
 | `fixtures/trivy-report.sample.json` | One-finding sample (Tomcat / CVE-2026-43515) so the CLI can run without a real scan |
 
 ### Package config
@@ -140,11 +140,11 @@ petclinic, web, api, …               the audited repositories
 
 If the agent decides everything, it may auto-upgrade any severity. The allow-list lives in `policy.ts`:
 
-- `CRITICAL` only (`AUTO_REMEDIATE_SEVERITIES`)
+- `CRITICAL` and `HIGH` (`AUTO_REMEDIATE_SEVERITIES`)
 - Fixable by a version bump
 - Not a downgrade. A major bump is included and opens a pull request for review
 
-The shortest live extension is adding `"HIGH"` to that set.
+The shortest live extension is adding `"MEDIUM"` to that set.
 
 ## Runtimes
 

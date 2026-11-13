@@ -95,7 +95,7 @@ sequenceDiagram
     Cursor-->>Triage: working tree
     Triage-->>CLI: JSON
 
-    CLI->>Policy: CRITICAL? bump-only? not a downgrade?
+    CLI->>Policy: CRITICAL or HIGH? bump-only? not a downgrade?
     Policy-->>CLI: decisions[]
 
     alt zero auto_remediate
@@ -116,7 +116,7 @@ sequenceDiagram
 
 `auto_remediate` requires all of:
 
-1. Severity is CRITICAL
+1. Severity is CRITICAL or HIGH
 2. A version bump alone is enough (`recommendedVersion` present)
 3. Not a downgrade. A major bump still opens a pull request
 
