@@ -1,10 +1,10 @@
 {
  "owner": "Acme-finance-demo",
- "generatedAt": "2026-11-13T00:33:26+00:00",
- "scannedAt": "2026-11-13T00:32:29.02934489Z",
+ "generatedAt": "2026-11-13T23:31:03+00:00",
+ "scannedAt": "2026-11-13T23:26:31.006924195Z",
  "scanner": "Trivy 0.74.0",
- "runId": "43337834019",
- "runUrl": "https://github.com/Acme-finance-demo/cursor-governance-demo/actions/runs/43337834019",
+ "runId": "43527083936",
+ "runUrl": "https://github.com/Acme-finance-demo/cursor-governance-demo/actions/runs/43527083936",
  "repos": [
   {
    "slug": "Acme-finance-demo/auth-service",
@@ -57,9 +57,29 @@
     "MEDIUM": 2
    },
    "packages": 1,
-   "remediationRan": false,
+   "remediationRan": true,
    "error": "",
-   "decisions": []
+   "decisions": [
+    {
+     "action": "auto_remediate",
+     "reason": "HIGH patch/minor bump 4.17.20 → 4.18.1",
+     "outcome": "already_open",
+     "prUrl": "https://github.com/Acme-finance-demo/partner-gateway/pull/1",
+     "package": "lodash",
+     "currentVersion": "4.17.20",
+     "recommendedVersion": "4.18.1",
+     "severity": "HIGH",
+     "cves": [
+      "CVE-2021-23337",
+      "CVE-2026-4800",
+      "CVE-2020-28500",
+      "CVE-2025-13465"
+     ],
+     "isDirectDependency": true,
+     "isMajorBump": false,
+     "notes": "Direct dependency only; bump lodash in package.json to >=4.18.1 (4.17.21+ clears older HIGH/MEDIUM issues; 4.17.23 clears CVE-2025-13465 for the main lodash package; 4.18.0+ per advisory, 4.18.1 per fix text, clears CVE-2026-4800). Run npm install to update package-lock.json. Staying on 4.x is not a semver major bump. Application code does not use the vulnerable template/imports path; risk is mostly supply-chain and any future lodash API use."
+    }
+   ]
   },
   {
    "slug": "Acme-finance-demo/payments-api",
@@ -114,9 +134,268 @@
     "MEDIUM": 24
    },
    "packages": 14,
-   "remediationRan": false,
+   "remediationRan": true,
    "error": "",
-   "decisions": []
+   "decisions": [
+    {
+     "action": "comment_only",
+     "reason": "severity MEDIUM is outside the auto-remediate set",
+     "outcome": "",
+     "prUrl": "",
+     "package": "ch.qos.logback:logback-core",
+     "currentVersion": "1.5.18",
+     "recommendedVersion": "1.5.19",
+     "severity": "MEDIUM",
+     "cves": [
+      "CVE-2025-11226"
+     ],
+     "isDirectDependency": false,
+     "isMajorBump": false,
+     "notes": "Transitive via `spring-boot-starter-logging`. Conditional-config ACE needs Janino plus writable config; low risk for default PetClinic logging. Override with `ext['logback.version']` / `<logback.version>` (same pattern as Tomcat/Thymeleaf) or inherit from a newer Boot BOM."
+    },
+    {
+     "action": "auto_remediate",
+     "reason": "HIGH patch/minor bump 2.19.0 → 2.22.3",
+     "outcome": "already_open",
+     "prUrl": "https://github.com/Acme-finance-demo/spring-petclinic-cursor/pull/8",
+     "package": "com.fasterxml.jackson.core:jackson-core",
+     "currentVersion": "2.19.0",
+     "recommendedVersion": "2.22.3",
+     "severity": "HIGH",
+     "cves": [
+      "CVE-2026-68494",
+      "CVE-2026-89407",
+      "CVE-2026-89425",
+      "CVE-2026-18401"
+     ],
+     "isDirectDependency": false,
+     "isMajorBump": false,
+     "notes": "Transitive via `spring-boot-starter-json` / `jackson-databind`. Sync MVC JSON is less exposed to async-parser DoS than WebFlux, but stringified-number and DataInput paths still matter. Boot 3.5.0 manages 2.19.0; set `jackson-bom.version` in Gradle `ext` and Maven `<properties>` to align core with databind."
+    },
+    {
+     "action": "auto_remediate",
+     "reason": "HIGH patch/minor bump 2.19.0 → 2.22.3",
+     "outcome": "already_open",
+     "prUrl": "https://github.com/Acme-finance-demo/spring-petclinic-cursor/pull/8",
+     "package": "com.fasterxml.jackson.core:jackson-databind",
+     "currentVersion": "2.19.0",
+     "recommendedVersion": "2.22.3",
+     "severity": "HIGH",
+     "cves": [
+      "CVE-2026-54512",
+      "CVE-2026-54513",
+      "CVE-2026-68497",
+      "CVE-2026-91776",
+      "CVE-2026-91777",
+      "CVE-2026-19032",
+      "CVE-2026-54514",
+      "CVE-2026-54515",
+      "CVE-2026-59888",
+      "CVE-2026-59889",
+      "CVE-2026-77310",
+      "CVE-2026-83557"
+     ],
+     "isDirectDependency": false,
+     "isMajorBump": false,
+     "notes": "Transitive (Testcontainers brings an additional databind edge in the test graph). Many CVEs need polymorphic typing, `@JsonTypeInfo`, Records naming, or untrusted `Path`/`InetAddress` binding—mostly absent in PetClinic. Still upgrade Jackson BOM; keep core and databind on the same BOM version."
+    },
+    {
+     "action": "auto_remediate",
+     "reason": "HIGH patch/minor bump 1.15.0 → 1.15.12",
+     "outcome": "already_open",
+     "prUrl": "https://github.com/Acme-finance-demo/spring-petclinic-cursor/pull/8",
+     "package": "io.micrometer:micrometer-core",
+     "currentVersion": "1.15.0",
+     "recommendedVersion": "1.15.12",
+     "severity": "HIGH",
+     "cves": [
+      "CVE-2026-40983",
+      "CVE-2026-40984"
+     ],
+     "isDirectDependency": false,
+     "isMajorBump": false,
+     "notes": "Transitive via `spring-boot-starter-actuator`. DoS via crafted HTTP/gRPC affects metrics plumbing when actuator endpoints are exposed; PetClinic exposes actuator on the runtime classpath. Prefer 1.15.12 on the current Boot 3.5 line via parent/plugin bump rather than jumping to 1.16.x unless Boot BOM moves."
+    },
+    {
+     "action": "comment_only",
+     "reason": "severity MEDIUM is outside the auto-remediate set",
+     "outcome": "",
+     "prUrl": "",
+     "package": "org.apache.logging.log4j:log4j-api",
+     "currentVersion": "2.24.3",
+     "recommendedVersion": "2.26.1",
+     "severity": "MEDIUM",
+     "cves": [
+      "CVE-2026-49844"
+     ],
+     "isDirectDependency": false,
+     "isMajorBump": false,
+     "notes": "Transitive bridge from `spring-boot-starter-logging` (Logback is primary). JSON layout issue only affects MapMessage JSON layouts; default Logback config is unlikely to hit it. Override `log4j2.version` / rely on newer Boot BOM."
+    },
+    {
+     "action": "auto_remediate",
+     "reason": "HIGH patch/minor bump 42.7.5 → 42.7.12",
+     "outcome": "already_open",
+     "prUrl": "https://github.com/Acme-finance-demo/spring-petclinic-cursor/pull/8",
+     "package": "org.postgresql:postgresql",
+     "currentVersion": "42.7.5",
+     "recommendedVersion": "42.7.12",
+     "severity": "HIGH",
+     "cves": [
+      "CVE-2025-49146",
+      "CVE-2026-42198",
+      "CVE-2026-54291"
+     ],
+     "isDirectDependency": true,
+     "isMajorBump": false,
+     "notes": "Direct `runtimeOnly` / `runtime` dependency; version from Boot BOM. Relevant when `spring.profiles.active=postgres` (channel binding / SCRAM). Set `<postgresql.version>42.7.12</postgresql.version>` and Gradle `ext['postgresql.version']` to match existing override style."
+    },
+    {
+     "action": "auto_remediate",
+     "reason": "HIGH patch/minor bump 3.5.0 → 3.5.15",
+     "outcome": "already_open",
+     "prUrl": "https://github.com/Acme-finance-demo/spring-petclinic-cursor/pull/8",
+     "package": "org.springframework.boot:spring-boot",
+     "currentVersion": "3.5.0",
+     "recommendedVersion": "3.5.15",
+     "severity": "HIGH",
+     "cves": [
+      "CVE-2026-40973"
+     ],
+     "isDirectDependency": false,
+     "isMajorBump": false,
+     "notes": "Jar is transitive; platform version is direct via Gradle plugin `3.5.0` and Maven parent `3.5.0`. ApplicationTemp/session issue needs local attacker and `server.servlet.session.persistent=true` (atypical). Bump plugin/parent to at least 3.5.14; 3.5.15 aligns with autoconfigure fix line."
+    },
+    {
+     "action": "comment_only",
+     "reason": "severity MEDIUM is outside the auto-remediate set",
+     "outcome": "",
+     "prUrl": "",
+     "package": "org.springframework.boot:spring-boot-autoconfigure",
+     "currentVersion": "3.5.0",
+     "recommendedVersion": "3.5.15",
+     "severity": "MEDIUM",
+     "cves": [
+      "CVE-2026-41001"
+     ],
+     "isDirectDependency": false,
+     "isMajorBump": false,
+     "notes": "Transitive from starters. Embedded Artemis predictable path is irrelevant unless Artemis auto-config is used (not in PetClinic). Fixed by the same Boot parent/plugin bump."
+    },
+    {
+     "action": "auto_remediate",
+     "reason": "HIGH patch/minor bump 3.5.0 → 3.5.15",
+     "outcome": "already_open",
+     "prUrl": "https://github.com/Acme-finance-demo/spring-petclinic-cursor/pull/8",
+     "package": "org.springframework.boot:spring-boot-starter-actuator",
+     "currentVersion": "3.5.0",
+     "recommendedVersion": "3.5.15",
+     "severity": "HIGH",
+     "cves": [
+      "CVE-2026-22731",
+      "CVE-2026-22733"
+     ],
+     "isDirectDependency": true,
+     "isMajorBump": false,
+     "notes": "Direct runtime dependency in both builds. Actuator health-group / CloudFoundry path auth bypass matters when custom secured endpoints share actuator paths. Bump Boot to ≥3.5.12 (≥3.5.15 recommended for combined fixes) and review `management.endpoints` exposure."
+    },
+    {
+     "action": "auto_remediate",
+     "reason": "HIGH patch/minor bump 3.5.0 → 3.5.12",
+     "outcome": "already_open",
+     "prUrl": "https://github.com/Acme-finance-demo/spring-petclinic-cursor/pull/8",
+     "package": "org.springframework.data:spring-data-commons",
+     "currentVersion": "3.5.0",
+     "recommendedVersion": "3.5.12",
+     "severity": "HIGH",
+     "cves": [
+      "CVE-2026-41695",
+      "CVE-2026-41716",
+      "CVE-2026-41711",
+      "CVE-2026-41721"
+     ],
+     "isDirectDependency": false,
+     "isMajorBump": false,
+     "notes": "Transitive via `spring-boot-starter-data-jpa`. Sort/property-path DoS and cache exhaustion need attacker-influenced web parameters; some paths apply with Spring Data Web. Boot 3.5.12+ manages the fixed commons version."
+    },
+    {
+     "action": "auto_remediate",
+     "reason": "HIGH patch/minor bump 6.2.7 → 6.2.19",
+     "outcome": "already_open",
+     "prUrl": "https://github.com/Acme-finance-demo/spring-petclinic-cursor/pull/8",
+     "package": "org.springframework:spring-core",
+     "currentVersion": "6.2.7",
+     "recommendedVersion": "6.2.19",
+     "severity": "HIGH",
+     "cves": [
+      "CVE-2025-41249"
+     ],
+     "isDirectDependency": false,
+     "isMajorBump": false,
+     "notes": "Transitive from the Spring stack. Annotation detection bug matters only with `@EnableMethodSecurity` on generic hierarchies; PetClinic does not use method security. Ship 6.2.11+ via Boot bump; 6.2.19 aligns with other Framework CVE fixes."
+    },
+    {
+     "action": "auto_remediate",
+     "reason": "HIGH patch/minor bump 6.2.7 → 6.2.19",
+     "outcome": "already_open",
+     "prUrl": "https://github.com/Acme-finance-demo/spring-petclinic-cursor/pull/8",
+     "package": "org.springframework:spring-expression",
+     "currentVersion": "6.2.7",
+     "recommendedVersion": "6.2.19",
+     "severity": "HIGH",
+     "cves": [
+      "CVE-2026-41850",
+      "CVE-2026-41851"
+     ],
+     "isDirectDependency": false,
+     "isMajorBump": false,
+     "notes": "Transitive. SpEL DoS requires evaluating user-supplied SpEL; PetClinic does not expose SpEL endpoints. Still upgrade with `spring-framework.version` or Boot BOM refresh."
+    },
+    {
+     "action": "comment_only",
+     "reason": "severity MEDIUM is outside the auto-remediate set",
+     "outcome": "",
+     "prUrl": "",
+     "package": "org.springframework:spring-web",
+     "currentVersion": "6.2.7",
+     "recommendedVersion": "6.2.19",
+     "severity": "MEDIUM",
+     "cves": [
+      "CVE-2025-41234",
+      "CVE-2026-41854"
+     ],
+     "isDirectDependency": false,
+     "isMajorBump": false,
+     "notes": "Transitive via `spring-boot-starter-web`. RFD needs non-ASCII `ContentDisposition` filename from user input; SSRF via `UriComponentsBuilder` needs app code parsing hostile URLs. PetClinic has limited download/URL parsing surfaces."
+    },
+    {
+     "action": "comment_only",
+     "reason": "no safe version bump is available",
+     "outcome": "",
+     "prUrl": "",
+     "package": "org.springframework:spring-webmvc",
+     "currentVersion": "6.2.7",
+     "recommendedVersion": "7.0.9",
+     "severity": "CRITICAL",
+     "cves": [
+      "CVE-2026-47884",
+      "CVE-2026-47890",
+      "CVE-2026-41842",
+      "CVE-2026-41845",
+      "CVE-2025-41242",
+      "CVE-2026-22737",
+      "CVE-2026-22745",
+      "CVE-2026-41841",
+      "CVE-2026-41843",
+      "CVE-2026-41844",
+      "CVE-2026-41846",
+      "CVE-2026-41853"
+     ],
+     "isDirectDependency": false,
+     "isMajorBump": true,
+     "notes": "Transitive via `spring-boot-starter-web`. Advisories list 7.0.9 as the fix for both CRITICAL issues while 6.2.0–6.2.19 remain affected—full remediation on Boot 3.5 needs Spring Framework 7 (Boot 4). Non-critical items clear at 6.2.19 on Framework 6.2. PetClinic uses Thymeleaf, not `XsltView` or SSE view fragments, so CRITICAL exploit preconditions are unlikely; Windows static-resource DoS does not apply on Linux CI/runtime."
+    }
+   ]
   },
   {
    "slug": "Acme-finance-demo/web-app-sample",
@@ -134,9 +413,136 @@
     "MEDIUM": 12
    },
    "packages": 7,
-   "remediationRan": false,
+   "remediationRan": true,
    "error": "",
-   "decisions": []
+   "decisions": [
+    {
+     "action": "comment_only",
+     "reason": "severity MEDIUM is outside the auto-remediate set",
+     "outcome": "",
+     "prUrl": "",
+     "package": "go.mongodb.org/mongo-driver",
+     "currentVersion": "1.11.6",
+     "recommendedVersion": "1.17.7",
+     "severity": "MEDIUM",
+     "cves": [
+      "CVE-2026-2303"
+     ],
+     "isDirectDependency": true,
+     "isMajorBump": false,
+     "notes": "Listed in the root `require` block and imported for MongoDB access. Bump `go.mongodb.org/mongo-driver` in go.mod and run `go mod tidy`. CVE is in optional CGo GSSAPI/Kerberos auth bindings—low runtime risk if the app uses SCRAM/URI auth only, but the version bump is still warranted."
+    },
+    {
+     "action": "comment_only",
+     "reason": "severity MEDIUM is outside the auto-remediate set",
+     "outcome": "",
+     "prUrl": "",
+     "package": "golang.org/x/crypto",
+     "currentVersion": "0.55.0",
+     "recommendedVersion": "0.56.0",
+     "severity": "MEDIUM",
+     "cves": [
+      "CVE-2026-56855",
+      "CVE-2026-78662"
+     ],
+     "isDirectDependency": false,
+     "isMajorBump": false,
+     "notes": "Indirect; pinned in go.mod and pulled by gin, validator, mongo-driver, and x/net. Raised with `go get golang.org/x/crypto@v0.56.0` (same pattern as existing explicit indirect pins). SSH mux DoS CVEs matter only if something dials SSH with this library; otherwise blast radius is minimal."
+    },
+    {
+     "action": "auto_remediate",
+     "reason": "HIGH patch/minor bump 0.57.0 → 0.62.0",
+     "outcome": "already_open",
+     "prUrl": "https://github.com/Acme-finance-demo/web-app-sample/pull/58",
+     "package": "golang.org/x/net",
+     "currentVersion": "0.57.0",
+     "recommendedVersion": "0.62.0",
+     "severity": "HIGH",
+     "cves": [
+      "CVE-2026-78661",
+      "CVE-2026-78669",
+      "CVE-2026-78659",
+      "CVE-2026-78660",
+      "CVE-2026-78663",
+      "CVE-2026-97032",
+      "CVE-2026-97045"
+     ],
+     "isDirectDependency": false,
+     "isMajorBump": false,
+     "notes": "Indirect; explicitly required in go.mod. `0.62.0` satisfies the strictest advisory (HTML DoS/XSS); it also clears the `0.60.0` HTTP/2 fixes. Use `go get golang.org/x/net@v0.62.0`. Gin serves HTTP via stdlib `net/http`; x/net is still in the module graph for html/http2 helpers used by dependencies—upgrade is low conflict risk."
+    },
+    {
+     "action": "auto_remediate",
+     "reason": "HIGH patch/minor bump 1.16.1 → 1.16.2",
+     "outcome": "already_open",
+     "prUrl": "https://github.com/Acme-finance-demo/web-app-sample/pull/58",
+     "package": "follow-redirects",
+     "currentVersion": "1.16.1",
+     "recommendedVersion": "1.16.2",
+     "severity": "HIGH",
+     "cves": [
+      "CVE-2026-116689"
+     ],
+     "isDirectDependency": false,
+     "isMajorBump": false,
+     "notes": "Transitive via direct dependency `axios` (^1.16.0) and dev `http-proxy` (Vue CLI). Not in package.json; refresh package-lock.json (`npm update` / reinstall). Patch release within axios’s declared range; no overrides exist in this repo."
+    },
+    {
+     "action": "auto_remediate",
+     "reason": "HIGH patch/minor bump 3.3.4 → 3.3.18",
+     "outcome": "already_open",
+     "prUrl": "https://github.com/Acme-finance-demo/web-app-sample/pull/58",
+     "package": "nanoid",
+     "currentVersion": "3.3.4",
+     "recommendedVersion": "3.3.18",
+     "severity": "HIGH",
+     "cves": [
+      "CVE-2026-67213",
+      "CVE-2026-67214",
+      "CVE-2026-73086",
+      "CVE-2024-55565"
+     ],
+     "isDirectDependency": false,
+     "isMajorBump": false,
+     "notes": "Transitive dependency of lockfile-resolved `postcss@8.4.19` (^3.3.4). Staying on nanoid 3.x avoids a major jump to 5.x. Lockfile refresh should hoist to 3.3.18, which meets all listed 3.x fix floors; app code does not call nanoid directly."
+    },
+    {
+     "action": "auto_remediate",
+     "reason": "HIGH patch/minor bump 8.4.19 → 8.5.23",
+     "outcome": "already_open",
+     "prUrl": "https://github.com/Acme-finance-demo/web-app-sample/pull/58",
+     "package": "postcss",
+     "currentVersion": "8.4.19",
+     "recommendedVersion": "8.5.23",
+     "severity": "HIGH",
+     "cves": [
+      "CVE-2026-45623",
+      "CVE-2026-73646",
+      "CVE-2023-44270",
+      "CVE-2026-41305",
+      "CVE-2026-69153"
+     ],
+     "isDirectDependency": false,
+     "isMajorBump": false,
+     "notes": "Transitive via `@vue/cli-service` and many PostCSS 8–compatible plugins (^8.1–^8.4). Not a direct package.json dependency; lockfile refresh can resolve 8.5.23 within those ranges. Advisories mostly affect untrusted CSS/source-map parsing (build-time); separate `postcss@7.x` copy under `@vue/component-compiler-utils` is outside this scanner row. Re-run `npm run build` after upgrade."
+    },
+    {
+     "action": "auto_remediate",
+     "reason": "HIGH patch/minor bump 1.0.2 → 1.2.2",
+     "outcome": "already_open",
+     "prUrl": "https://github.com/Acme-finance-demo/web-app-sample/pull/58",
+     "package": "source-map-js",
+     "currentVersion": "1.0.2",
+     "recommendedVersion": "1.2.2",
+     "severity": "HIGH",
+     "cves": [
+      "CVE-2026-93749"
+     ],
+     "isDirectDependency": false,
+     "isMajorBump": false,
+     "notes": "Transitive via `postcss` (^1.0.2). Lockfile refresh alongside postcss pulls 1.2.2. DoS via malformed indexed source maps is primarily a dev/build-time concern unless server-side source-map parsing handles untrusted input."
+    }
+   ]
   },
   {
    "slug": "Acme-finance-demo/web-checkout",
@@ -1266,12 +1672,44 @@
  ],
  "openPullRequests": [
   {
+   "repo": "Acme-finance-demo/partner-gateway",
+   "number": 1,
+   "title": "fix(deps): bump lodash to 4.18.1 (CVE remediation)",
+   "url": "https://github.com/Acme-finance-demo/partner-gateway/pull/1",
+   "head": "cursor/lodash-cve-remediation-41da",
+   "createdAt": "2026-11-13T00:34:19Z"
+  },
+  {
    "repo": "Acme-finance-demo/spring-petclinic-cursor",
    "number": 8,
    "title": "fix(deps): bump Spring Framework for spring-webmvc (CVE-2026-47884, CVE-2026-47890, …)",
    "url": "https://github.com/Acme-finance-demo/spring-petclinic-cursor/pull/8",
    "head": "cursor/spring-webmvc-spring-framework-80c7",
    "createdAt": "2026-11-06T23:02:34Z"
+  },
+  {
+   "repo": "Acme-finance-demo/web-app-sample",
+   "number": 58,
+   "title": "fix(go-gin): bump golang.org/x/net to v0.62.0 (HIGH CVEs)",
+   "url": "https://github.com/Acme-finance-demo/web-app-sample/pull/58",
+   "head": "cursor/golang-x-net-cve-7a6e",
+   "createdAt": "2026-11-13T00:38:03Z"
+  },
+  {
+   "repo": "Acme-finance-demo/web-app-sample",
+   "number": 57,
+   "title": "fix(vue-js): bump follow-redirects to 1.16.2 (CVE-2026-116689)",
+   "url": "https://github.com/Acme-finance-demo/web-app-sample/pull/57",
+   "head": "cursor/bump-follow-redirects-cve-091c",
+   "createdAt": "2026-11-13T00:37:50Z"
+  },
+  {
+   "repo": "Acme-finance-demo/web-app-sample",
+   "number": 56,
+   "title": "fix(vue-js): remediate nanoid CVEs (3.3.4 → 3.3.18)",
+   "url": "https://github.com/Acme-finance-demo/web-app-sample/pull/56",
+   "head": "cursor/cve-nanoid-048b",
+   "createdAt": "2026-11-13T00:37:50Z"
   },
   {
    "repo": "Acme-finance-demo/web-app-sample",
