@@ -8,7 +8,8 @@
 #   scan       Trivy だけ。Cursor の枠を使わないので全リポジトリを並列に回せる。
 #              「Org 配下の全プロジェクトが同時に検査されている」状態はここで作る。
 #   remediate  Cloud Agent（triage → policy → 修正 PR → 影響分析）。プランの同時実行
-#              Cloud Agent 数に上限があるので直列。CRITICAL が出たリポジトリだけ。
+#              Cloud Agent 数に上限があるので直列。policy.ts の
+#              AUTO_REMEDIATE_SEVERITIES に入った深刻度が出たリポジトリだけ。
 #
 # 単一リポジトリ版は security-scan.yml。こちらはフリート全体を回す方。
 name: fleet governance
@@ -208,8 +209,9 @@ jobs:
           if-no-files-found: warn
 
   # 検査結果を見て、修正段に渡すリポジトリだけを選ぶ。
-  # CRITICAL が 0 件のリポジトリに Cloud Agent を起こさない。トークンの消費は
-  # 「検査した回数」ではなく「直す回数」に比例させたい。
+  # policy.ts の AUTO_REMEDIATE_SEVERITIES に入った深刻度が 0 件のリポジトリには
+  # Cloud Agent を起こさない。トークンの消費は「検査した回数」ではなく
+  # 「直す回数」に比例させたい。
   triage-gate:
     needs: [plan, scan]
     if: always() && needs.plan.outputs.count != '0'
@@ -218,6 +220,7 @@ jobs:
       matrix: ${{ steps.select.outputs.matrix }}
       count: ${{ steps.select.outputs.count }}
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           pattern: scan-state-*
@@ -226,14 +229,7 @@ jobs:
       - id: select
         env:
           MATRIX: ${{ needs.plan.outputs.matrix }}
-        run: |
-          set -uo pipefail
-          ACTIONABLE=$(jq -s -c '[.[] | select((.findings.bySeverity.CRITICAL // 0) > 0) | .fleetSlug]' scan/*.json 2>/dev/null || echo '[]')
-          echo "repositories with CRITICAL findings: ${ACTIONABLE}"
-          OUT=$(jq -c --argjson actionable "$ACTIONABLE" '[.[] | select(.slug as $s | $actionable | index($s))]' <<<"$MATRIX")
-          echo "matrix=${OUT}" >> "$GITHUB_OUTPUT"
-          echo "count=$(jq 'length' <<<"$OUT")" >> "$GITHUB_OUTPUT"
-          jq -r '.[] | "  will remediate \(.slug)@\(.ref)"' <<<"$OUT"
+        run: python3 governance/select-remediate.py
 
   # 修正。ここだけ Cloud Agent を使うので直列。
   remediate:
