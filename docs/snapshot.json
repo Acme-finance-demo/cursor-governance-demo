@@ -1,10 +1,10 @@
 {
  "owner": "Acme-finance-demo",
- "generatedAt": "2026-11-17T01:53:33+00:00",
- "scannedAt": "2026-11-17T01:48:50.168639353Z",
+ "generatedAt": "2026-11-18T00:56:01+00:00",
+ "scannedAt": "2026-11-18T00:51:05.666320976Z",
  "scanner": "Trivy 0.74.0",
- "runId": "43998332953",
- "runUrl": "https://github.com/Acme-finance-demo/cursor-governance-demo/actions/runs/43998332953",
+ "runId": "44211137791",
+ "runUrl": "https://github.com/Acme-finance-demo/cursor-governance-demo/actions/runs/44211137791",
  "repos": [
   {
    "slug": "Acme-finance-demo/auth-service",
@@ -77,7 +77,7 @@
      ],
      "isDirectDependency": true,
      "isMajorBump": false,
-     "notes": "Pinned directly in package.json; no transitive copies. Solutions range from 4.17.21 through 4.17.23 up to 4.18.0; 4.18.1 satisfies the strictest fix (template imports / CVE-2026-4800) and the 4.17.23+ unset/omit patch line. This is a minor semver step within major 4 (4.17 → 4.18), not a major bump. Fix path matches existing practice: change the direct dependency version and run npm install to update package-lock.json. Blast radius is limited to call sites of lodash APIs in this small gateway; 4.18.x remains the lodash 4 API surface."
+     "notes": "Direct dependency with exact version in package.json; lockfile lists only this instance. Highest scanner-listed solution is 4.18.0 (CVE-2026-4800); advisory text cites 4.18.1—use 4.18.1 to satisfy 4.17.21, 4.17.23, and template-import fixes in one step. No overrides or version catalog; bump lodash and run npm install to refresh package-lock.json. Repo use is basic utilities in tests, not _.template or path-based unset/omit with untrusted input, so a 4.17.x→4.18.x bump is low risk here."
     }
    ]
   },
@@ -151,16 +151,16 @@
      ],
      "isDirectDependency": false,
      "isMajorBump": false,
-     "notes": "Transitive via `spring-boot-starter-logging`. Conditional-config ACE needs Janino and writable config; low practical risk for this sample. Override `logback.version` (Maven property / Gradle `ext`) matching existing Tomcat/Thymeleaf overrides, or absorb via a newer Boot BOM."
+     "notes": "Transitive via `spring-boot-starter-logging` on every starter. Conditional-config ACE needs Janino plus writable config or env injection; low practical risk for this app. Set `logback.version` / upgrade Boot BOM like existing Tomcat overrides."
     },
     {
      "action": "auto_remediate",
-     "reason": "HIGH patch/minor bump 2.19.0 → 2.21.7",
+     "reason": "HIGH patch/minor bump 2.19.0 → 2.22.3",
      "outcome": "already_open",
      "prUrl": "https://github.com/Acme-finance-demo/spring-petclinic-cursor/pull/8",
      "package": "com.fasterxml.jackson.core:jackson-core",
      "currentVersion": "2.19.0",
-     "recommendedVersion": "2.21.7",
+     "recommendedVersion": "2.22.3",
      "severity": "HIGH",
      "cves": [
       "CVE-2026-68494",
@@ -170,16 +170,16 @@
      ],
      "isDirectDependency": false,
      "isMajorBump": false,
-     "notes": "Transitive through `spring-boot-starter-json`. App is servlet MVC (not WebFlux), so async-parser DoS paths are less exposed but the library is still on the classpath. Raise managed Jackson BOM to 2.21.7+ via Boot upgrade or `jackson-bom.version` override."
+     "notes": "Transitive via `spring-boot-starter-json`, actuator, and test starters. Petclinic uses classic servlet MVC (not WebFlux), so async-parser DoS paths are less exposed but JSON parsing is still on the hot path. Align with `jackson-bom.version` property or Boot upgrade; 2.21.7 is the minimum on the 21 line but 2.22.3 satisfies every listed fix."
     },
     {
      "action": "auto_remediate",
-     "reason": "HIGH patch/minor bump 2.19.0 → 2.21.7",
+     "reason": "HIGH patch/minor bump 2.19.0 → 2.22.3",
      "outcome": "already_open",
      "prUrl": "https://github.com/Acme-finance-demo/spring-petclinic-cursor/pull/8",
      "package": "com.fasterxml.jackson.core:jackson-databind",
      "currentVersion": "2.19.0",
-     "recommendedVersion": "2.21.7",
+     "recommendedVersion": "2.22.3",
      "severity": "HIGH",
      "cves": [
       "CVE-2026-54512",
@@ -197,7 +197,7 @@
      ],
      "isDirectDependency": false,
      "isMajorBump": false,
-     "notes": "Managed with jackson-core. Several issues need polymorphic typing, `@JsonView`/`@JsonUnwrapped`, or untrusted binding to exotic types; Petclinic uses typical REST/JPA DTOs, but upgrade stays warranted. Align databind with jackson-core at 2.21.7 through the BOM."
+     "notes": "Same BOM-managed transitives as jackson-core; must stay version-aligned with jackson-core. PTV/default typing issues matter only if polymorphic typing is enabled (not typical here). Upgrade Boot or Jackson BOM property; keep databind and core on the same release."
     },
     {
      "action": "auto_remediate",
@@ -214,7 +214,7 @@
      ],
      "isDirectDependency": false,
      "isMajorBump": false,
-     "notes": "Pulled in by `spring-boot-starter-actuator`. DoS via crafted HTTP/gRPC metrics traffic. Patch release on the 1.15 line; should ride Boot 3.5.12+ BOM or `micrometer.version` property override."
+     "notes": "Transitive through `spring-boot-starter-actuator` (direct starter). Actuator is on the runtime classpath in Gradle; HTTP/gRPC metric parsing DoS is relevant when endpoints are exposed. Fix via Boot 3.5.12+ or micrometer version property on the 1.15 line."
     },
     {
      "action": "comment_only",
@@ -230,7 +230,7 @@
      ],
      "isDirectDependency": false,
      "isMajorBump": false,
-     "notes": "Transitive from Spring Boot logging bridges; Boot defaults to Logback, so MapMessage JSON layout impact is unlikely unless JsonTemplateLayout is configured. Bump `log4j2.version` / Boot BOM to at least 2.25.5."
+     "notes": "Transitive via `log4j-to-slf4j` bridge; logging backend is Logback. Issue affects MapMessage JSON layouts only—unlikely unless JsonTemplateLayout with attacker-controlled map values is used. Bump `log4j2.version` or Boot BOM."
     },
     {
      "action": "auto_remediate",
@@ -248,7 +248,7 @@
      ],
      "isDirectDependency": true,
      "isMajorBump": false,
-     "notes": "Declared `runtimeOnly` / `runtime` without an explicit version; version comes from the Boot BOM. Only used when `postgres` profile is active. Set `postgresql.version` to 42.7.12 in both builds (same pattern as `tomcat.version` overrides)."
+     "notes": "Declared `runtimeOnly` in Gradle and runtime in Maven without an explicit version (parent/BOM managed today). Used only under the `postgres` profile; channel-binding and SCRAM issues matter for production PostgreSQL deployments. Set `postgresql.version` in properties or rely on newer Boot parent—same override style as Tomcat."
     },
     {
      "action": "auto_remediate",
@@ -264,7 +264,7 @@
      ],
      "isDirectDependency": false,
      "isMajorBump": false,
-     "notes": "Core Boot jar is transitive from starters, not declared on its own. `ApplicationTemp` / persistent sessions issue needs local attacker and `server.servlet.session.persistent=true` (not default). Fix by raising Gradle Boot plugin and Maven parent to 3.5.15+."
+     "notes": "Version follows Boot plugin (Gradle) and parent POM (Maven); jar is transitive via starters/devtools. `ApplicationTemp` / persistent session issue needs local same-host attacker and `server.servlet.session.persistent=true` (not default). Raise `spring-boot` plugin and parent together to ≥3.5.15."
     },
     {
      "action": "comment_only",
@@ -280,16 +280,16 @@
      ],
      "isDirectDependency": false,
      "isMajorBump": false,
-     "notes": "Transitive from all starters. Embedded Artemis predictable path is irrelevant unless Artemis auto-config runs (not used here). Still fixed in Boot 3.5.15; upgrade parent/plugin version."
+     "notes": "Transitive via all starters. Embedded Artemis predictable data directory is irrelevant unless embedded Artemis auto-config runs (not used in Petclinic). Fixed on the 3.5 line at 3.5.15 via Boot version bump."
     },
     {
      "action": "auto_remediate",
-     "reason": "HIGH patch/minor bump 3.5.0 → 3.5.15",
+     "reason": "HIGH patch/minor bump 3.5.0 → 3.5.12",
      "outcome": "already_open",
      "prUrl": "https://github.com/Acme-finance-demo/spring-petclinic-cursor/pull/8",
      "package": "org.springframework.boot:spring-boot-starter-actuator",
      "currentVersion": "3.5.0",
-     "recommendedVersion": "3.5.15",
+     "recommendedVersion": "3.5.12",
      "severity": "HIGH",
      "cves": [
       "CVE-2026-22731",
@@ -297,7 +297,7 @@
      ],
      "isDirectDependency": true,
      "isMajorBump": false,
-     "notes": "Direct runtime dependency; `management.endpoints.web.exposure.include=*` widens actuator attack surface. Health-group / Cloud Foundry path auth-bypass fixes ship in Boot 3.5.12+; prefer 3.5.15 to align with other Boot CVEs."
+     "notes": "Explicit dependency in both builds (Gradle runtimeOnly). Health-group / Cloud Foundry path auth-bypass CVEs apply when Actuator is enabled and paths overlap custom secured endpoints—review `management.*` config after upgrade to ≥3.5.12."
     },
     {
      "action": "auto_remediate",
@@ -316,7 +316,7 @@
      ],
      "isDirectDependency": false,
      "isMajorBump": false,
-     "notes": "From `spring-boot-starter-data-jpa`. Sort/property-path DoS affects apps accepting attacker-controlled sort or projection parameters. Fixed in Spring Data 3.5.12 via Boot BOM bump (no separate direct declaration)."
+     "notes": "Transitive via `spring-boot-starter-data-jpa`. DoS via property paths, sort parsing, and `@ProjectedPayload` affects apps exposing Spring Data web binding; Petclinic uses repository APIs with typical MVC controllers—moderate exposure if sort/page params are attacker-controlled. Upgrade Boot to ≥3.5.12."
     },
     {
      "action": "auto_remediate",
@@ -332,7 +332,7 @@
      ],
      "isDirectDependency": false,
      "isMajorBump": false,
-     "notes": "BOM-managed Spring Framework module. Annotation detection bug matters if `@EnableMethodSecurity` is used on generic hierarchies; Petclinic does not appear to use method security. Upgrade via Boot release that imports Framework 6.2.11+ or `spring-framework.version` override."
+     "notes": "BOM-managed via Boot. Annotation resolution bug on generic hierarchies affects `@EnableMethodSecurity` on generic supertypes; Petclinic does not declare method security. Still upgrade Framework with Boot release that manages ≥6.2.11."
     },
     {
      "action": "auto_remediate",
@@ -349,7 +349,7 @@
      ],
      "isDirectDependency": false,
      "isMajorBump": false,
-     "notes": "SpEL DoS requires evaluating attacker-controlled expressions; typical Petclinic controllers do not. Still remediate with Framework 6.2.19 through Boot BOM or `spring-framework.version`."
+     "notes": "Transitive via web stack. SpEL DoS requires evaluating attacker-supplied expressions; typical Petclinic code does not expose SpEL. Fix at 6.2.19 through Boot BOM bump."
     },
     {
      "action": "comment_only",
@@ -366,7 +366,7 @@
      ],
      "isDirectDependency": false,
      "isMajorBump": false,
-     "notes": "RFD via non-ASCII `ContentDisposition` filename and SSRF via `UriComponentsBuilder` host parsing need user-influenced headers/URLs. 6.2.19 covers the newer SSRF fix; RFD fixed in 6.2.8+. Align entire Framework stack to 6.2.19."
+     "notes": "Transitive via `spring-boot-starter-web`. RFD via non-ASCII Content-Disposition filenames and SSRF via UriComponentsBuilder require specific application patterns; review any download endpoints. 6.2.19 addresses both on the 6.2 line."
     },
     {
      "action": "comment_only",
@@ -393,7 +393,7 @@
      ],
      "isDirectDependency": false,
      "isMajorBump": true,
-     "notes": "Vendor lists CVE-2026-47884 (XsltView RCE) and CVE-2026-47890 (SSE stream corruption) fixes only on Framework 7.0.9; remaining findings have 6.2.10–6.2.19 fixes. Petclinic uses Thymeleaf on embedded Tomcat (not XSLT views, not Windows static FS, not WebFlux), lowering exploitability but not scanner status. Full remediation is a major Spring Boot 4 / Framework 7 upgrade; interim 6.2.19 via Boot 3.5.x addresses non-CRITICAL items only."
+     "notes": "Transitive via `spring-boot-starter-web`. Advisories list 7.0.9 as the fix for CRITICAL XsltView RCE and SSE corruption while 6.2.0–6.2.19 remain affected; other listed CVEs clear at 6.2.19 on Boot 3.x. Boot 3.5.15 cannot ship Framework 7 without a major migration (Boot 4). Petclinic does not reference XsltView, which lowers practical RCE risk. Partial mitigation: Boot upgrade to latest 3.5.x for non-CRITICAL items; full CRITICAL clearance may require Spring Boot 4 / Framework 7 or a future 6.2.x backport not listed in scanner solutions."
     }
    ]
   },
@@ -430,7 +430,7 @@
      ],
      "isDirectDependency": true,
      "isMajorBump": false,
-     "notes": "Direct entry in go.mod; app uses mongo.NewClient and BSON APIs in configs/ and controllers/. Patch is a large v1 jump (1.11→1.17) but major version stays 1. CVE is in optional CGo GSSAPI/Kerberos auth—low runtime risk if SCRAM/standard URI auth only. After bump, run go mod tidy and regression-test Mongo connectivity; watch for deprecations (e.g. NewClient vs Connect)."
+     "notes": "Direct require in go-gin/go.mod; app uses the standard Go driver with URI/username-password auth in configs/setup.go, so the GSSAPI/Kerberos heap OOB read is unlikely unless production enables Kerberos auth. A 1.11→1.17 driver bump is still the repo’s normal go.mod + go.sum workflow; run integration tests against MongoDB for BSON/API behavior changes."
     },
     {
      "action": "comment_only",
@@ -447,7 +447,7 @@
      ],
      "isDirectDependency": false,
      "isMajorBump": false,
-     "notes": "Indirect in go.mod; pulled by gin stack, validator, and mongo-driver. CVEs affect golang.org/x/crypto/ssh DoS—not used directly by this Gin API unless something imports ssh. Safe fix: go get golang.org/x/crypto@v0.56.0 (minimal minor within 0.x module line)."
+     "notes": "Indirect module version pinned in go.mod; pulled by gin, validator, mongo-driver, and cors at lower declared mins, with MVS selecting v0.55.0. CVEs target golang.org/x/crypto/ssh DoS paths—the Gin HTTP API does not appear to use ssh, but upgrading via `go get golang.org/x/crypto@v0.56.0` is low-risk and matches existing go.mod management."
     },
     {
      "action": "auto_remediate",
@@ -469,7 +469,7 @@
      ],
      "isDirectDependency": false,
      "isMajorBump": false,
-     "notes": "Indirect in go.mod; unified to v0.57.0 via MVS from gin, validator, mimetype, and x/crypto. Fixes span html parser DoS/XSS and multiple http2 issues relevant to net/http servers/clients (Gin). Highest fixed version across findings is 0.62.0. Use go get golang.org/x/net@v0.62.0 and retest HTTP serving."
+     "notes": "Indirect require in go.mod; consumed by Gin and other HTTP-related dependencies. Fixes span golang.org/x/net/html and http2 (DoS, smuggling, XSS in HTML rendering)—relevant to any HTTP/2 or HTML parsing on the server. `go get golang.org/x/net@v0.62.0` satisfies the highest advisory floor (0.62.0 for html issues; also covers 0.60.0 http2 fixes); go mod may co-upgrade x/crypto/x/text."
     },
     {
      "action": "auto_remediate",
@@ -485,7 +485,7 @@
      ],
      "isDirectDependency": false,
      "isMajorBump": false,
-     "notes": "Transitive: direct dependency axios@1.20.0 (^1.16.0) and dev-only http-proxy@1.18.1 (^1.0.0). Runtime exposure is the Vue client HTTP stack. axios semver already allows 1.16.2; npm update follow-redirects or lockfile refresh in vue-js should resolve without overrides. Patch-level bump."
+     "notes": "Lockfile transitive: required by direct dependency axios (^1.16.0) and devDependency http-proxy via webpack-dev-server. axios’s semver range already allows 1.16.2; refresh package-lock.json with npm update/install—no package.json override field exists today. Browser axios bundles typically do not use this Node helper; risk is mainly Node-side redirects with custom sensitiveHeaders."
     },
     {
      "action": "auto_remediate",
@@ -504,7 +504,7 @@
      ],
      "isDirectDependency": false,
      "isMajorBump": false,
-     "notes": "Transitive via postcss@8.4.19 (^3.3.4). Only exercised if build tooling calls nanoid with attacker-controlled size/alphabet; not a direct app dependency. Stay on 3.x line (3.3.18 satisfies all listed 3.x fix floors; avoids nanoid 5 major). Lockfile refresh/npm update nanoid is sufficient."
+     "notes": "Lockfile transitive bundled under postcss@8.4.19 (^3.3.4 range permits 3.3.18 without jumping to nanoid 5.x). Used at build time by the Vue CLI CSS pipeline, not declared in package.json. Staying on major 3 avoids a breaking jump to 5.x; lockfile refresh after postcss bump or targeted resolution should suffice unless a parent pins exactly 3.3.4."
     },
     {
      "action": "auto_remediate",
@@ -524,7 +524,7 @@
      ],
      "isDirectDependency": false,
      "isMajorBump": false,
-     "notes": "Transitive dev dependency from @vue/cli-service@5.0.8 and webpack/css pipeline (^8.x ranges allow 8.5.23). CVEs matter when untrusted CSS is processed (path traversal/source maps, XSS stringify)—typical Vue CLI build is trusted project CSS. Separate nested postcss@7.0.39 under @vue/component-compiler-utils is not the scanned 8.4.19 instance; upgrading the 8.x tree does not automatically fix 7.x. Bump via npm update postcss and verify npm run build."
+     "notes": "Lockfile transitive from @vue/cli-service (~5.0) and related webpack/css tooling; package.json has no direct postcss entry. @vue/cli-service declares postcss ^8.4.14, which accepts 8.5.23. A separate nested postcss@7.0.39 remains under @vue/component-compiler-utils and is outside this 8.4.19 finding—may need a tooling upgrade to retire 7.x. CVEs mostly affect parsing untrusted CSS (source maps, XSS in stringify)—primarily dev/build unless untrusted CSS is processed at runtime."
     },
     {
      "action": "auto_remediate",
@@ -540,7 +540,7 @@
      ],
      "isDirectDependency": false,
      "isMajorBump": false,
-     "notes": "Transitive via postcss (^1.0.2). DoS on malicious indexed source maps during build. postcss dependency range permits 1.2.2; lockfile refresh should pull it without overrides. Dev/build-time blast radius."
+     "notes": "Lockfile transitive dependency of postcss@8.4.19 (^1.0.2). DoS via malformed indexed source maps affects build-time source-map handling. Typically co-resolves when postcss is upgraded and package-lock.json is refreshed; no separate direct dep or npm override in the repo today."
     }
    ]
   },
