@@ -1,10 +1,10 @@
 {
  "owner": "Acme-finance-demo",
- "generatedAt": "2026-11-19T00:10:45+00:00",
- "scannedAt": "2026-11-19T00:09:17.827304175Z",
+ "generatedAt": "2026-11-20T00:32:39+00:00",
+ "scannedAt": "2026-11-20T00:31:06.800181712Z",
  "scanner": "Trivy 0.74.0",
- "runId": "44426619497",
- "runUrl": "https://github.com/Acme-finance-demo/cursor-governance-demo/actions/runs/44426619497",
+ "runId": "44646445349",
+ "runUrl": "https://github.com/Acme-finance-demo/cursor-governance-demo/actions/runs/44646445349",
  "repos": [
   {
    "slug": "Acme-finance-demo/auth-service",
